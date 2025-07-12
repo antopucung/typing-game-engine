@@ -2,7 +2,6 @@ import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Flex } from "../layout/Flex";
 import { Text } from "../ui/Text";
-import { Card } from "../ui/Card";
 import { Zap } from "lucide-react";
 
 export function GameHeader() {

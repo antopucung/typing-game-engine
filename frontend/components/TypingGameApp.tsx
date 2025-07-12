@@ -2,39 +2,33 @@ import React from "react";
 import { useTypingEngine } from "../hooks/useTypingEngine";
 import { GameLayout } from "./layout/GameLayout";
 import { GameHeader } from "./game/GameHeader";
-import { TypingArea } from "./game/TypingArea";
-import { GameStats } from "./game/GameStats";
-import { GameControls } from "./game/GameControls";
-import { GameResults } from "./game/GameResults";
-import { Flex } from "./layout/Flex";
+import { GameIdleScreen } from "./game/GameIdleScreen";
+import { GamePlayingScreen } from "./game/GamePlayingScreen";
+import { GamePausedScreen } from "./game/GamePausedScreen";
+import { GameFinishedScreen } from "./game/GameFinishedScreen";
 
 export function TypingGameApp() {
   const { state } = useTypingEngine();
 
+  const renderGameScreen = () => {
+    switch (state.gameStatus) {
+      case "idle":
+        return <GameIdleScreen />;
+      case "playing":
+        return <GamePlayingScreen />;
+      case "paused":
+        return <GamePausedScreen />;
+      case "finished":
+        return <GameFinishedScreen />;
+      default:
+        return <GameIdleScreen />;
+    }
+  };
+
   return (
     <GameLayout>
       <GameHeader />
-      
-      {state.gameStatus === "idle" && (
-        <Flex direction="column" align="center" justify="center" style={{ flex: 1 }}>
-          <GameControls />
-        </Flex>
-      )}
-      
-      {(state.gameStatus === "playing" || state.gameStatus === "paused") && (
-        <Flex direction="column" style={{ flex: 1 }}>
-          <GameStats />
-          <TypingArea />
-          <GameControls />
-        </Flex>
-      )}
-      
-      {state.gameStatus === "finished" && (
-        <Flex direction="column" style={{ flex: 1 }}>
-          <GameResults />
-          <GameControls />
-        </Flex>
-      )}
+      {renderGameScreen()}
     </GameLayout>
   );
 }
