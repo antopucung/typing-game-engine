@@ -75,44 +75,6 @@ export function useTypingEngine() {
     return () => clearInterval(interval);
   }, [state.gameStatus, dispatch]);
 
-  // Keyboard event handling - Fixed to work properly
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle keyboard input when game is playing
-      if (state.gameStatus !== "playing") return;
-      
-      // Don't interfere with browser shortcuts
-      if (event.ctrlKey || event.altKey || event.metaKey) return;
-      
-      // Prevent default behavior for typing keys
-      if (event.key === "Backspace") {
-        event.preventDefault();
-        handleBackspace();
-      } else if (event.key.length === 1) {
-        // Only handle single character keys (letters, numbers, symbols, spaces)
-        event.preventDefault();
-        typeCharacter(event.key);
-      }
-    };
-
-    // Add event listener to the document to ensure it captures all key events
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [state.gameStatus, typeCharacter, handleBackspace]);
-
-  // Focus management - ensure the game area can receive focus
-  useEffect(() => {
-    if (state.gameStatus === "playing") {
-      // Small delay to ensure the DOM is ready
-      const timer = setTimeout(() => {
-        // Try to focus the document body to ensure keyboard events are captured
-        document.body.focus();
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [state.gameStatus]);
-
   return {
     state,
     startGame,

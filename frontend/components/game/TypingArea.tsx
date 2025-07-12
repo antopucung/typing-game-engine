@@ -4,7 +4,7 @@ import { useTypingEngine } from "../../hooks/useTypingEngine";
 
 export function TypingArea() {
   const { theme } = useTheme();
-  const { state } = useTypingEngine();
+  const { state, typeCharacter, handleBackspace } = useTypingEngine();
   const containerRef = useRef<HTMLDivElement>(null);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; type: 'correct' | 'incorrect' }>>([]);
   const [shake, setShake] = useState(false);
@@ -15,10 +15,56 @@ export function TypingArea() {
   useEffect(() => {
     if (containerRef.current && state.gameStatus === "playing") {
       containerRef.current.focus();
-      // Also ensure the container is focusable
-      containerRef.current.setAttribute('tabindex', '0');
     }
   }, [state.gameStatus]);
+
+  // Handle keyboard input directly in the component
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard input when game is playing
+      if (state.gameStatus !== "playing") return;
+      
+      // Don't interfere with browser shortcuts
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      
+      // Prevent default behavior for typing keys
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        handleBackspace();
+      } else if (event.key.length === 1) {
+        // Only handle single character keys (letters, numbers, symbols, spaces)
+        event.preventDefault();
+        typeCharacter(event.key);
+      }
+    };
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Prevent default on all key presses during gameplay
+      if (state.gameStatus === "playing") {
+        event.preventDefault();
+      }
+    };
+
+    // Add event listeners to the container and document
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("keydown", handleKeyDown);
+      container.addEventListener("keypress", handleKeyPress);
+    }
+    
+    // Also add to document as fallback
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keypress", handleKeyPress);
+
+    return () => {
+      if (container) {
+        container.removeEventListener("keydown", handleKeyDown);
+        container.removeEventListener("keypress", handleKeyPress);
+      }
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keypress", handleKeyPress);
+    };
+  }, [state.gameStatus, typeCharacter, handleBackspace]);
 
   // Blinking cursor effect
   useEffect(() => {
@@ -263,6 +309,12 @@ export function TypingArea() {
         onClick={() => {
           // Ensure focus when clicked
           if (containerRef.current && state.gameStatus === "playing") {
+            containerRef.current.focus();
+          }
+        }}
+        onFocus={() => {
+          // Ensure the container stays focused during gameplay
+          if (state.gameStatus === "playing" && containerRef.current) {
             containerRef.current.focus();
           }
         }}
