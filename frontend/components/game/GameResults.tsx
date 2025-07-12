@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTypingEngine } from "../../hooks/useTypingEngine";
+import { Grid } from "../layout/Grid";
+import { Flex } from "../layout/Flex";
+import { Card } from "../ui/Card";
+import { Text } from "../ui/Text";
 import { Trophy, Target, Gauge, Clock, Flame, Star, Award, Zap, Activity, TrendingUp } from "lucide-react";
 
 export function GameResults() {
@@ -14,10 +18,8 @@ export function GameResults() {
     : 0;
 
   useEffect(() => {
-    // Trigger animations when component mounts
     setTimeout(() => setAnimateStats(true), 300);
     
-    // Show confetti for good performance
     if (state.wpm >= 60 || state.accuracy >= 95 || state.maxCombo >= 25) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
@@ -127,19 +129,24 @@ export function GameResults() {
   ];
 
   return (
-    <div className="flex flex-col items-center space-y-8 relative">
-      {/* Confetti Effect */}
+    <Flex direction="column" align="center" gap={theme.spacing[8]} style={{ position: "relative" }}>
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none z-10">
+        <div style={{ 
+          position: "absolute", 
+          inset: 0, 
+          pointerEvents: "none", 
+          zIndex: theme.zIndex.popover 
+        }}>
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
-              className="absolute animate-ping"
               style={{
+                position: "absolute",
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
+                animation: "ping 2s infinite",
                 animationDelay: `${Math.random() * 2}s`,
-                fontSize: '2rem',
+                fontSize: "2rem",
               }}
             >
               🎉
@@ -148,207 +155,210 @@ export function GameResults() {
         </div>
       )}
 
-      <div className="text-center">
+      <Flex direction="column" align="center" gap={theme.spacing[4]}>
         <div 
-          className={`text-8xl mb-4 transition-all duration-1000 ${
-            performance.glow ? 'animate-pulse' : ''
-          }`}
           style={{
-            filter: performance.glow ? `drop-shadow(0 0 20px ${performance.color})` : 'none'
+            fontSize: "5rem",
+            marginBottom: theme.spacing[4],
+            transition: theme.transitions.slow,
+            filter: performance.glow ? `drop-shadow(0 0 20px ${performance.color})` : "none",
+            animation: performance.glow ? "pulse 2s infinite" : "none",
           }}
         >
           {performance.icon}
         </div>
-        <h2 
-          className={`text-4xl font-bold mb-2 transition-all duration-1000 ${
-            performance.glow ? 'animate-pulse' : ''
-          }`} 
+        <Text 
+          variant="heading" 
+          size="4xl" 
+          as="h2"
           style={{ 
             color: performance.color,
-            textShadow: performance.glow ? `0 0 20px ${performance.color}50` : 'none'
+            textShadow: performance.glow ? `0 0 20px ${performance.color}50` : "none",
+            animation: performance.glow ? "pulse 2s infinite" : "none",
+            marginBottom: theme.spacing[2],
           }}
         >
           {performance.rating}
-        </h2>
-        <p style={{ color: theme.colors.text.secondary }}>
+        </Text>
+        <Text variant="body" color="secondary">
           Game completed on {state.difficulty} difficulty
-        </p>
-      </div>
+        </Text>
+      </Flex>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
+      <Grid columns={4} gap="lg" style={{ width: "100%", maxWidth: "96rem" }}>
         {results.map((result, index) => (
-          <div
+          <Card
             key={index}
-            className={`p-6 rounded-lg text-center transition-all duration-700 transform hover:scale-105 ${
-              animateStats ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-            } ${result.highlight ? 'animate-pulse' : ''}`}
-            style={{ 
-              backgroundColor: theme.colors.surface,
+            variant="default"
+            hover
+            style={{
+              textAlign: "center",
               border: `1px solid ${result.highlight ? result.color : theme.colors.ui.border}`,
-              boxShadow: result.highlight ? `0 0 20px ${result.color}30` : 'none',
-              transitionDelay: `${index * 100}ms`
+              boxShadow: result.highlight ? `0 0 20px ${result.color}30` : theme.shadows.sm,
+              transform: animateStats ? "translateY(0)" : "translateY(2rem)",
+              opacity: animateStats ? 1 : 0,
+              transition: `all ${theme.transitions.slow}`,
+              transitionDelay: `${index * 100}ms`,
+              animation: result.highlight ? "pulse 2s infinite" : "none",
             }}
           >
-            <div className="flex items-center justify-center mb-3">
+            <Flex direction="column" align="center" gap={theme.spacing[3]}>
               <result.icon 
-                className={`w-6 h-6 transition-all duration-300 ${
-                  result.highlight ? 'animate-bounce' : ''
-                }`} 
-                style={{ color: result.color }} 
-              />
-            </div>
-            <div 
-              className={`text-3xl font-bold mb-1 transition-all duration-300 ${
-                result.highlight ? 'animate-pulse' : ''
-              }`} 
-              style={{ 
-                color: result.color,
-                textShadow: result.highlight ? `0 0 10px ${result.color}50` : 'none'
-              }}
-            >
-              {result.value}{result.suffix}
-            </div>
-            <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-              {result.label}
-            </div>
-            {result.highlight && (
-              <div className="mt-2">
-                <Award className="w-4 h-4 mx-auto animate-spin" style={{ color: result.color }} />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Typing Statistics Summary */}
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div 
-          className="p-4 rounded-lg text-center"
-          style={{ 
-            backgroundColor: theme.colors.surface,
-            border: `1px solid ${theme.colors.ui.border}`
-          }}
-        >
-          <div className="text-2xl font-bold" style={{ color: theme.colors.primary }}>
-            {state.totalKeystrokes}
-          </div>
-          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-            Total Keystrokes
-          </div>
-        </div>
-        
-        <div 
-          className="p-4 rounded-lg text-center"
-          style={{ 
-            backgroundColor: theme.colors.surface,
-            border: `1px solid ${theme.colors.ui.border}`
-          }}
-        >
-          <div className="text-2xl font-bold" style={{ color: theme.colors.status.correct }}>
-            {state.correctChars.size}
-          </div>
-          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-            Correct Characters
-          </div>
-        </div>
-        
-        <div 
-          className="p-4 rounded-lg text-center"
-          style={{ 
-            backgroundColor: theme.colors.surface,
-            border: `1px solid ${theme.colors.ui.border}`
-          }}
-        >
-          <div className="text-2xl font-bold" style={{ color: theme.colors.status.incorrect }}>
-            {state.incorrectChars.size}
-          </div>
-          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-            Incorrect Characters
-          </div>
-        </div>
-      </div>
-
-      {/* Achievement Showcase */}
-      {state.achievements.length > 0 && (
-        <div className="w-full max-w-2xl">
-          <h3 className="text-xl font-bold mb-4 text-center flex items-center justify-center space-x-2">
-            <Zap className="w-6 h-6" style={{ color: theme.colors.accent }} />
-            <span>New Achievements!</span>
-            <Zap className="w-6 h-6" style={{ color: theme.colors.accent }} />
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {state.achievements.slice(-3).map((achievement, index) => (
-              <div
-                key={index}
-                className="p-4 rounded-lg flex items-center space-x-3 transform hover:scale-105 transition-all duration-300 animate-pulse"
                 style={{ 
-                  backgroundColor: theme.colors.surface,
-                  border: `2px solid ${theme.colors.accent}`,
-                  boxShadow: `0 0 15px ${theme.colors.accent}30`
+                  width: "1.5rem", 
+                  height: "1.5rem",
+                  color: result.color,
+                  animation: result.highlight ? "bounce 1s infinite" : "none",
+                }} 
+              />
+              <Text 
+                variant="heading" 
+                size="3xl" 
+                style={{ 
+                  color: result.color,
+                  textShadow: result.highlight ? `0 0 10px ${result.color}50` : "none",
+                  animation: result.highlight ? "pulse 2s infinite" : "none",
                 }}
               >
-                <div className="text-3xl animate-bounce">🏅</div>
-                <div>
-                  <div className="font-semibold" style={{ color: theme.colors.accent }}>
-                    {achievement}
-                  </div>
-                  <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-                    Achievement unlocked!
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                {result.value}{result.suffix}
+              </Text>
+              <Text variant="caption" color="muted">
+                {result.label}
+              </Text>
+              {result.highlight && (
+                <Award 
+                  style={{ 
+                    width: "1rem", 
+                    height: "1rem", 
+                    color: result.color,
+                    animation: "spin 2s linear infinite",
+                  }} 
+                />
+              )}
+            </Flex>
+          </Card>
+        ))}
+      </Grid>
+
+      <Grid columns={3} gap="md" style={{ width: "100%", maxWidth: "64rem" }}>
+        <Card variant="default" style={{ textAlign: "center" }}>
+          <Text variant="heading" size="2xl" color="primary">
+            {state.totalKeystrokes}
+          </Text>
+          <Text variant="caption" color="muted">
+            Total Keystrokes
+          </Text>
+        </Card>
+        
+        <Card variant="default" style={{ textAlign: "center" }}>
+          <Text variant="heading" size="2xl" color="success">
+            {state.correctChars.size}
+          </Text>
+          <Text variant="caption" color="muted">
+            Correct Characters
+          </Text>
+        </Card>
+        
+        <Card variant="default" style={{ textAlign: "center" }}>
+          <Text variant="heading" size="2xl" color="error">
+            {state.incorrectChars.size}
+          </Text>
+          <Text variant="caption" color="muted">
+            Incorrect Characters
+          </Text>
+        </Card>
+      </Grid>
+
+      {state.achievements.length > 0 && (
+        <div style={{ width: "100%", maxWidth: "32rem" }}>
+          <Flex direction="column" align="center" gap={theme.spacing[4]}>
+            <Flex align="center" gap={theme.spacing[2]}>
+              <Zap style={{ width: "1.5rem", height: "1.5rem", color: theme.colors.accent }} />
+              <Text variant="heading" size="xl">New Achievements!</Text>
+              <Zap style={{ width: "1.5rem", height: "1.5rem", color: theme.colors.accent }} />
+            </Flex>
+            <Grid columns={2} gap="md" style={{ width: "100%" }}>
+              {state.achievements.slice(-3).map((achievement, index) => (
+                <Card
+                  key={index}
+                  variant="outlined"
+                  hover
+                  style={{
+                    border: `2px solid ${theme.colors.accent}`,
+                    boxShadow: `0 0 15px ${theme.colors.accent}30`,
+                    animation: "pulse 2s infinite",
+                  }}
+                >
+                  <Flex align="center" gap={theme.spacing[3]}>
+                    <div style={{ fontSize: "3rem", animation: "bounce 1s infinite" }}>🏅</div>
+                    <div>
+                      <Text variant="body" weight="semibold" style={{ color: theme.colors.accent }}>
+                        {achievement}
+                      </Text>
+                      <Text variant="caption" color="muted">
+                        Achievement unlocked!
+                      </Text>
+                    </div>
+                  </Flex>
+                </Card>
+              ))}
+            </Grid>
+          </Flex>
         </div>
       )}
 
-      {/* Performance Bonuses */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+      <Grid columns={3} gap="md" style={{ width: "100%", maxWidth: "32rem" }}>
         {state.netWpm >= 60 && (
-          <div 
-            className="p-3 rounded-lg text-center animate-pulse"
+          <Card 
+            variant="outlined"
             style={{ 
+              textAlign: "center",
               backgroundColor: `${theme.colors.accent}20`,
-              border: `1px solid ${theme.colors.accent}`
+              border: `1px solid ${theme.colors.accent}`,
+              animation: "pulse 2s infinite",
             }}
           >
-            <div className="text-2xl">🚀</div>
-            <div className="text-sm font-bold" style={{ color: theme.colors.accent }}>
+            <div style={{ fontSize: "2rem" }}>🚀</div>
+            <Text variant="caption" weight="bold" style={{ color: theme.colors.accent }}>
               SPEED DEMON
-            </div>
-          </div>
+            </Text>
+          </Card>
         )}
         
         {state.accuracy >= 95 && (
-          <div 
-            className="p-3 rounded-lg text-center animate-pulse"
+          <Card 
+            variant="outlined"
             style={{ 
+              textAlign: "center",
               backgroundColor: `${theme.colors.status.correct}20`,
-              border: `1px solid ${theme.colors.status.correct}`
+              border: `1px solid ${theme.colors.status.correct}`,
+              animation: "pulse 2s infinite",
             }}
           >
-            <div className="text-2xl">🎯</div>
-            <div className="text-sm font-bold" style={{ color: theme.colors.status.correct }}>
+            <div style={{ fontSize: "2rem" }}>🎯</div>
+            <Text variant="caption" weight="bold" style={{ color: theme.colors.status.correct }}>
               PRECISION MASTER
-            </div>
-          </div>
+            </Text>
+          </Card>
         )}
         
         {state.consistencyScore >= 90 && (
-          <div 
-            className="p-3 rounded-lg text-center animate-pulse"
+          <Card 
+            variant="outlined"
             style={{ 
+              textAlign: "center",
               backgroundColor: `${theme.colors.primary}20`,
-              border: `1px solid ${theme.colors.primary}`
+              border: `1px solid ${theme.colors.primary}`,
+              animation: "pulse 2s infinite",
             }}
           >
-            <div className="text-2xl">📈</div>
-            <div className="text-sm font-bold" style={{ color: theme.colors.primary }}>
+            <div style={{ fontSize: "2rem" }}>📈</div>
+            <Text variant="caption" weight="bold" style={{ color: theme.colors.primary }}>
               CONSISTENCY KING
-            </div>
-          </div>
+            </Text>
+          </Card>
         )}
-      </div>
-    </div>
+      </Grid>
+    </Flex>
   );
 }

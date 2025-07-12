@@ -1,12 +1,13 @@
 import React, { ReactNode } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { getComponentStyle } from "../../design-system/components";
 import { LucideIcon } from "lucide-react";
 
 interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "outline" | "disabled";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "disabled";
   size?: "sm" | "md" | "lg";
   icon?: LucideIcon;
   className?: string;
@@ -25,73 +26,79 @@ export function Button({
 }: ButtonProps) {
   const { theme } = useTheme();
 
-  const getVariantStyles = () => {
-    switch (variant) {
-      case "primary":
-        return {
-          backgroundColor: theme.colors.primary,
-          color: "white",
-          border: `1px solid ${theme.colors.primary}`,
-          boxShadow: `0 0 15px ${theme.colors.primary}30`,
-        };
-      case "secondary":
-        return {
-          backgroundColor: theme.colors.surface,
-          color: theme.colors.text.primary,
-          border: `1px solid ${theme.colors.ui.border}`,
-        };
-      case "outline":
-        return {
-          backgroundColor: "transparent",
-          color: theme.colors.text.primary,
-          border: `1px solid ${theme.colors.ui.border}`,
-        };
-      case "disabled":
-        return {
-          backgroundColor: theme.colors.surface,
-          color: theme.colors.text.muted,
-          border: `1px solid ${theme.colors.ui.border}`,
-        };
-      default:
-        return {};
-    }
+  const baseStyle = getComponentStyle("button", disabled ? "disabled" : variant, theme);
+  
+  const sizeStyles = {
+    sm: {
+      padding: `${theme.spacing[2]} ${theme.spacing[3]}`,
+      fontSize: theme.typography.fontSize.sm,
+    },
+    md: {
+      padding: `${theme.spacing[3]} ${theme.spacing[6]}`,
+      fontSize: theme.typography.fontSize.base,
+    },
+    lg: {
+      padding: `${theme.spacing[4]} ${theme.spacing[8]}`,
+      fontSize: theme.typography.fontSize.lg,
+    },
   };
 
-  const getSizeStyles = () => {
-    switch (size) {
-      case "sm":
-        return "px-3 py-1.5 text-sm";
-      case "lg":
-        return "px-8 py-4 text-lg";
-      default:
-        return "px-6 py-3 text-base";
-    }
-  };
+  const hoverStyles = !disabled && variant !== "disabled" ? {
+    ":hover": {
+      opacity: 0.9,
+      transform: "scale(1.05)",
+      boxShadow: theme.shadows.lg,
+    },
+    ":active": {
+      transform: "scale(0.95)",
+    },
+  } : {};
 
-  const baseClasses = `
-    inline-flex items-center justify-center space-x-2 
-    font-medium rounded-lg transition-all duration-300 
-    focus:outline-none focus:ring-2 focus:ring-offset-2
-    ${getSizeStyles()}
-    ${disabled || variant === "disabled" 
-      ? "cursor-not-allowed opacity-50" 
-      : "cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg active:scale-95"
-    }
-    ${className}
-  `;
+  const combinedStyle: React.CSSProperties = {
+    ...baseStyle,
+    ...sizeStyles[size],
+    ...style,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: theme.spacing[2],
+    outline: "none",
+    userSelect: "none",
+    ...hoverStyles,
+  };
 
   return (
     <button
-      onClick={disabled || variant === "disabled" ? undefined : onClick}
-      disabled={disabled || variant === "disabled"}
-      className={baseClasses}
-      style={{
-        ...getVariantStyles(),
-        ...style,
-        focusRingColor: theme.colors.ui.focus,
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={className}
+      style={combinedStyle}
+      onMouseEnter={(e) => {
+        if (!disabled && variant !== "disabled") {
+          e.currentTarget.style.opacity = "0.9";
+          e.currentTarget.style.transform = "scale(1.05)";
+          e.currentTarget.style.boxShadow = theme.shadows.lg;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled && variant !== "disabled") {
+          e.currentTarget.style.opacity = "1";
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = baseStyle.boxShadow || "none";
+        }
+      }}
+      onMouseDown={(e) => {
+        if (!disabled && variant !== "disabled") {
+          e.currentTarget.style.transform = "scale(0.95)";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (!disabled && variant !== "disabled") {
+          e.currentTarget.style.transform = "scale(1.05)";
+        }
       }}
     >
-      {Icon && <Icon className="w-5 h-5" />}
+      {Icon && <Icon style={{ width: "1.25rem", height: "1.25rem" }} />}
       <span>{children}</span>
     </button>
   );

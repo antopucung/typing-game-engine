@@ -1,34 +1,36 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useTypingEngine } from "../../hooks/useTypingEngine";
+import { Flex } from "../layout/Flex";
+import { Text } from "../ui/Text";
+import { Card } from "../ui/Card";
 import { Zap } from "lucide-react";
 
 export function GameHeader() {
   const { theme } = useTheme();
-  const { state } = useTypingEngine();
+
+  const iconContainerStyle: React.CSSProperties = {
+    padding: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.primary,
+  };
 
   return (
-    <header 
-      className="flex items-center justify-center p-6 mb-6"
-    >
-      <div className="flex items-center space-x-3">
-        <div 
-          className="p-3 rounded-lg"
-          style={{ 
-            backgroundColor: theme.colors.primary,
-          }}
-        >
-          <Zap className="w-8 h-8 text-white" />
-        </div>
-        <div className="text-center">
-          <h1 className="text-4xl font-bold" style={{ color: theme.colors.text.primary }}>
-            Typing Master
-          </h1>
-          <p style={{ color: theme.colors.text.secondary }} className="text-lg">
-            Test your typing speed and accuracy
-          </p>
-        </div>
-      </div>
+    <header style={{ padding: `${theme.spacing[6]} 0`, marginBottom: theme.spacing[6] }}>
+      <Flex justify="center" align="center">
+        <Flex align="center" gap={theme.spacing[3]}>
+          <div style={iconContainerStyle}>
+            <Zap style={{ width: "2rem", height: "2rem", color: "white" }} />
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <Text variant="heading" size="4xl" as="h1">
+              Typing Master
+            </Text>
+            <Text variant="body" size="lg" color="secondary">
+              Test your typing speed and accuracy
+            </Text>
+          </div>
+        </Flex>
+      </Flex>
     </header>
   );
 }

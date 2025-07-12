@@ -1,7 +1,11 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTypingEngine } from "../../hooks/useTypingEngine";
-import { Clock, Gauge, Target, Flame, Zap, Trophy } from "lucide-react";
+import { Grid } from "../layout/Grid";
+import { Card } from "../ui/Card";
+import { Text } from "../ui/Text";
+import { Flex } from "../layout/Flex";
+import { Clock, Gauge, Target, Trophy } from "lucide-react";
 
 export function GameStats() {
   const { theme } = useTheme();
@@ -14,16 +18,16 @@ export function GameStats() {
   };
 
   const getWpmColor = () => {
-    if (state.wpm >= 80) return theme.colors.accent;
-    if (state.wpm >= 60) return theme.colors.status.correct;
-    if (state.wpm >= 40) return theme.colors.primary;
-    return theme.colors.text.primary;
+    if (state.wpm >= 80) return "success";
+    if (state.wpm >= 60) return "warning";
+    if (state.wpm >= 40) return "primary";
+    return "primary";
   };
 
   const getAccuracyColor = () => {
-    if (state.accuracy >= 95) return theme.colors.status.correct;
-    if (state.accuracy >= 85) return theme.colors.status.current;
-    return theme.colors.status.incorrect;
+    if (state.accuracy >= 95) return "success";
+    if (state.accuracy >= 85) return "warning";
+    return "error";
   };
 
   const stats = [
@@ -31,7 +35,7 @@ export function GameStats() {
       icon: Clock,
       label: "Time",
       value: formatTime(state.remainingTime),
-      color: state.remainingTime <= 10 ? theme.colors.status.incorrect : theme.colors.text.primary,
+      color: state.remainingTime <= 10 ? "error" : "primary",
       pulse: state.remainingTime <= 10,
     },
     {
@@ -52,45 +56,50 @@ export function GameStats() {
       icon: Trophy,
       label: "Score",
       value: state.score.toString(),
-      color: theme.colors.accent,
+      color: "primary",
       pulse: false,
     },
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
-      {stats.map((stat, index) => (
-        <div
-          key={index}
-          className={`p-4 rounded-lg text-center transition-all duration-300 ${
-            stat.pulse ? 'animate-pulse' : ''
-          }`}
-          style={{ 
-            backgroundColor: theme.colors.surface,
-            border: `1px solid ${theme.colors.ui.border}`,
-            boxShadow: stat.pulse ? `0 0 15px ${stat.color}30` : 'none'
-          }}
-        >
-          <div className="flex items-center justify-center mb-2">
-            <stat.icon 
-              className={`w-6 h-6 transition-all duration-300 ${stat.pulse ? 'animate-bounce' : ''}`} 
-              style={{ color: stat.color }} 
-            />
-          </div>
-          <div 
-            className={`text-2xl font-bold transition-all duration-300 ${stat.pulse ? 'animate-pulse' : ''}`} 
-            style={{ 
-              color: stat.color,
-              textShadow: stat.pulse ? `0 0 8px ${stat.color}50` : 'none'
+    <div style={{ marginBottom: theme.spacing[6] }}>
+      <Grid columns={4} gap="md">
+        {stats.map((stat, index) => (
+          <Card 
+            key={index} 
+            variant="default"
+            style={{
+              textAlign: "center",
+              boxShadow: stat.pulse ? `0 0 15px ${theme.colors.status.correct}30` : theme.shadows.sm,
+              animation: stat.pulse ? "pulse 2s infinite" : "none",
             }}
           >
-            {stat.value}
-          </div>
-          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
-            {stat.label}
-          </div>
-        </div>
-      ))}
+            <Flex direction="column" align="center" gap={theme.spacing[2]}>
+              <stat.icon 
+                style={{ 
+                  width: "1.5rem", 
+                  height: "1.5rem",
+                  color: theme.colors.status[stat.color as keyof typeof theme.colors.status] || theme.colors.text[stat.color as keyof typeof theme.colors.text],
+                  animation: stat.pulse ? "bounce 1s infinite" : "none",
+                }} 
+              />
+              <Text 
+                variant="heading" 
+                size="2xl" 
+                color={stat.color as any}
+                style={{
+                  textShadow: stat.pulse ? `0 0 8px ${theme.colors.status.correct}50` : "none",
+                }}
+              >
+                {stat.value}
+              </Text>
+              <Text variant="caption" color="muted">
+                {stat.label}
+              </Text>
+            </Flex>
+          </Card>
+        ))}
+      </Grid>
     </div>
   );
 }

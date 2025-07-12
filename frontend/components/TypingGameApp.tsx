@@ -6,6 +6,7 @@ import { TypingArea } from "./game/TypingArea";
 import { GameStats } from "./game/GameStats";
 import { GameControls } from "./game/GameControls";
 import { GameResults } from "./game/GameResults";
+import { Flex } from "./layout/Flex";
 
 export function TypingGameApp() {
   const { state } = useTypingEngine();
@@ -15,24 +16,24 @@ export function TypingGameApp() {
       <GameHeader />
       
       {state.gameStatus === "idle" && (
-        <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+        <Flex direction="column" align="center" justify="center" style={{ flex: 1 }}>
           <GameControls />
-        </div>
+        </Flex>
       )}
       
       {(state.gameStatus === "playing" || state.gameStatus === "paused") && (
-        <div className="flex-1 flex flex-col">
+        <Flex direction="column" style={{ flex: 1 }}>
           <GameStats />
           <TypingArea />
           <GameControls />
-        </div>
+        </Flex>
       )}
       
       {state.gameStatus === "finished" && (
-        <div className="flex-1 flex flex-col space-y-6">
+        <Flex direction="column" style={{ flex: 1 }}>
           <GameResults />
           <GameControls />
-        </div>
+        </Flex>
       )}
     </GameLayout>
   );

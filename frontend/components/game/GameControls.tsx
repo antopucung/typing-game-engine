@@ -1,9 +1,11 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTypingEngine } from "../../hooks/useTypingEngine";
-import { Play, Pause, RotateCcw, Settings } from "lucide-react";
+import { Flex } from "../layout/Flex";
+import { Text } from "../ui/Text";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
+import { Play, Pause, RotateCcw, Settings } from "lucide-react";
 
 export function GameControls() {
   const { theme } = useTheme();
@@ -19,19 +21,30 @@ export function GameControls() {
 
   if (state.gameStatus === "idle") {
     return (
-      <div className="flex flex-col items-center space-y-6">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold mb-2">Ready to Type?</h2>
-          <p style={{ color: theme.colors.text.secondary }}>
+      <Flex direction="column" align="center" gap={theme.spacing[6]}>
+        <div style={{ textAlign: "center", marginBottom: theme.spacing[6] }}>
+          <Text variant="heading" size="3xl" as="h2" style={{ marginBottom: theme.spacing[2] }}>
+            Ready to Type?
+          </Text>
+          <Text variant="body" color="secondary">
             Choose your difficulty and start improving your typing skills
-          </p>
+          </Text>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <div className="flex items-center space-x-2">
-            <Settings className="w-5 h-5" style={{ color: theme.colors.text.muted }} />
-            <span style={{ color: theme.colors.text.secondary }}>Difficulty:</span>
-          </div>
+        <Flex 
+          direction="column" 
+          align="center" 
+          gap={theme.spacing[4]}
+          style={{
+            [`@media (min-width: ${theme.breakpoints.sm})`]: {
+              flexDirection: "row",
+            },
+          }}
+        >
+          <Flex align="center" gap={theme.spacing[2]}>
+            <Settings style={{ width: "1.25rem", height: "1.25rem", color: theme.colors.text.muted }} />
+            <Text variant="body" color="secondary">Difficulty:</Text>
+          </Flex>
           
           <Select
             value={state.difficulty}
@@ -51,14 +64,14 @@ export function GameControls() {
           >
             Start Game
           </Button>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
     );
   }
 
   if (state.gameStatus === "playing") {
     return (
-      <div className="flex justify-center space-x-4 mt-6">
+      <Flex justify="center" gap={theme.spacing[4]} style={{ marginTop: theme.spacing[6] }}>
         <Button
           onClick={pauseGame}
           variant="secondary"
@@ -73,13 +86,13 @@ export function GameControls() {
         >
           Reset
         </Button>
-      </div>
+      </Flex>
     );
   }
 
   if (state.gameStatus === "paused") {
     return (
-      <div className="flex justify-center space-x-4">
+      <Flex justify="center" gap={theme.spacing[4]}>
         <Button
           onClick={resumeGame}
           variant="primary"
@@ -94,12 +107,12 @@ export function GameControls() {
         >
           Reset
         </Button>
-      </div>
+      </Flex>
     );
   }
 
   return (
-    <div className="flex justify-center space-x-4">
+    <Flex justify="center" gap={theme.spacing[4]}>
       <Button
         onClick={handleStartGame}
         variant="primary"
@@ -114,6 +127,6 @@ export function GameControls() {
       >
         Reset
       </Button>
-    </div>
+    </Flex>
   );
 }

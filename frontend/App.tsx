@@ -5,7 +5,7 @@ import { TypingGameApp } from "./components/TypingGameApp";
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark">
       <TypingGameProvider>
         <TypingGameApp />
       </TypingGameProvider>
