@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTypingEngine } from "../../hooks/useTypingEngine";
-import { Trophy, Target, Gauge, Clock, Flame, Star, Award, Zap } from "lucide-react";
+import { Trophy, Target, Gauge, Clock, Flame, Star, Award, Zap, Activity, TrendingUp } from "lucide-react";
 
 export function GameResults() {
   const { theme } = useTheme();
@@ -62,11 +62,19 @@ export function GameResults() {
   const results = [
     {
       icon: Gauge,
-      label: "Words Per Minute",
-      value: state.wpm,
+      label: "Net WPM",
+      value: state.netWpm,
       suffix: "WPM",
-      color: state.wpm >= 60 ? theme.colors.accent : theme.colors.primary,
-      highlight: state.wpm >= 60,
+      color: state.netWpm >= 60 ? theme.colors.accent : theme.colors.primary,
+      highlight: state.netWpm >= 60,
+    },
+    {
+      icon: Activity,
+      label: "Raw WPM",
+      value: state.rawWpm,
+      suffix: "WPM",
+      color: theme.colors.text.secondary,
+      highlight: false,
     },
     {
       icon: Target,
@@ -75,6 +83,14 @@ export function GameResults() {
       suffix: "%",
       color: state.accuracy >= 95 ? theme.colors.status.correct : theme.colors.primary,
       highlight: state.accuracy >= 95,
+    },
+    {
+      icon: TrendingUp,
+      label: "Consistency",
+      value: state.consistencyScore,
+      suffix: "%",
+      color: state.consistencyScore >= 90 ? theme.colors.status.correct : theme.colors.status.current,
+      highlight: state.consistencyScore >= 90,
     },
     {
       icon: Trophy,
@@ -159,7 +175,7 @@ export function GameResults() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         {results.map((result, index) => (
           <div
             key={index}
@@ -204,6 +220,54 @@ export function GameResults() {
         ))}
       </div>
 
+      {/* Typing Statistics Summary */}
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div 
+          className="p-4 rounded-lg text-center"
+          style={{ 
+            backgroundColor: theme.colors.surface,
+            border: `1px solid ${theme.colors.ui.border}`
+          }}
+        >
+          <div className="text-2xl font-bold" style={{ color: theme.colors.primary }}>
+            {state.totalKeystrokes}
+          </div>
+          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
+            Total Keystrokes
+          </div>
+        </div>
+        
+        <div 
+          className="p-4 rounded-lg text-center"
+          style={{ 
+            backgroundColor: theme.colors.surface,
+            border: `1px solid ${theme.colors.ui.border}`
+          }}
+        >
+          <div className="text-2xl font-bold" style={{ color: theme.colors.status.correct }}>
+            {state.correctChars.size}
+          </div>
+          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
+            Correct Characters
+          </div>
+        </div>
+        
+        <div 
+          className="p-4 rounded-lg text-center"
+          style={{ 
+            backgroundColor: theme.colors.surface,
+            border: `1px solid ${theme.colors.ui.border}`
+          }}
+        >
+          <div className="text-2xl font-bold" style={{ color: theme.colors.status.incorrect }}>
+            {state.incorrectChars.size}
+          </div>
+          <div className="text-sm" style={{ color: theme.colors.text.muted }}>
+            Incorrect Characters
+          </div>
+        </div>
+      </div>
+
       {/* Achievement Showcase */}
       {state.achievements.length > 0 && (
         <div className="w-full max-w-2xl">
@@ -240,7 +304,7 @@ export function GameResults() {
 
       {/* Performance Bonuses */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
-        {state.wpm >= 60 && (
+        {state.netWpm >= 60 && (
           <div 
             className="p-3 rounded-lg text-center animate-pulse"
             style={{ 
@@ -270,7 +334,7 @@ export function GameResults() {
           </div>
         )}
         
-        {state.maxCombo >= 25 && (
+        {state.consistencyScore >= 90 && (
           <div 
             className="p-3 rounded-lg text-center animate-pulse"
             style={{ 
@@ -278,9 +342,9 @@ export function GameResults() {
               border: `1px solid ${theme.colors.primary}`
             }}
           >
-            <div className="text-2xl">🔥</div>
+            <div className="text-2xl">📈</div>
             <div className="text-sm font-bold" style={{ color: theme.colors.primary }}>
-              COMBO KING
+              CONSISTENCY KING
             </div>
           </div>
         )}

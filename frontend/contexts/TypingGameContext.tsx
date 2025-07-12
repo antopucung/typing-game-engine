@@ -28,6 +28,13 @@ export interface TypingGameState {
   experience: number;
   lastCharacterCorrect: boolean;
   perfectRounds: number;
+  incorrectChars: Set<number>;
+  correctChars: Set<number>;
+  totalKeystrokes: number;
+  rawWpm: number;
+  netWpm: number;
+  consistencyScore: number;
+  wpmHistory: number[];
 }
 
 export type TypingGameAction =
@@ -44,7 +51,8 @@ export type TypingGameAction =
   | { type: "UPDATE_STATS"; payload: { wpm: number; accuracy: number; score: number } }
   | { type: "ADD_ACHIEVEMENT"; payload: { achievement: string } }
   | { type: "LEVEL_UP" }
-  | { type: "UPDATE_POWER_UPS" };
+  | { type: "UPDATE_POWER_UPS" }
+  | { type: "UPDATE_WPM_HISTORY" };
 
 const initialState: TypingGameState = {
   gameStatus: "idle",
@@ -74,7 +82,26 @@ const initialState: TypingGameState = {
   experience: 0,
   lastCharacterCorrect: true,
   perfectRounds: 0,
+  incorrectChars: new Set(),
+  correctChars: new Set(),
+  totalKeystrokes: 0,
+  rawWpm: 0,
+  netWpm: 0,
+  consistencyScore: 100,
+  wpmHistory: [],
 };
+
+function calculateConsistency(wpmHistory: number[]): number {
+  if (wpmHistory.length < 2) return 100;
+  
+  const mean = wpmHistory.reduce((sum, wpm) => sum + wpm, 0) / wpmHistory.length;
+  const variance = wpmHistory.reduce((sum, wpm) => sum + Math.pow(wpm - mean, 2), 0) / wpmHistory.length;
+  const standardDeviation = Math.sqrt(variance);
+  
+  // Convert to consistency score (lower deviation = higher consistency)
+  const consistencyScore = Math.max(0, 100 - (standardDeviation * 2));
+  return Math.round(consistencyScore);
+}
 
 function checkAchievements(state: TypingGameState): string[] {
   const newAchievements: string[] = [];
@@ -122,6 +149,11 @@ function checkAchievements(state: TypingGameState): string[] {
     newAchievements.push("Flawless Victory");
   }
   
+  // Consistency achievements
+  if (state.consistencyScore >= 95 && state.wpmHistory.length >= 10 && !state.achievements.includes("Steady Hands")) {
+    newAchievements.push("Steady Hands");
+  }
+  
   return newAchievements;
 }
 
@@ -143,6 +175,13 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
         score: 0,
         streak: 0,
         lastCharacterCorrect: true,
+        incorrectChars: new Set(),
+        correctChars: new Set(),
+        totalKeystrokes: 0,
+        rawWpm: 0,
+        netWpm: 0,
+        wpmHistory: [],
+        consistencyScore: 100,
       };
 
     case "TYPE_CHARACTER": {
@@ -159,7 +198,22 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const isCorrect = character === expectedChar;
       const hasErrorImmunity = state.powerUps.errorImmunity > 0;
       
-      // If error immunity is active, treat incorrect characters as correct
+      // Track keystrokes
+      const newTotalKeystrokes = state.totalKeystrokes + 1;
+      
+      // Update character tracking sets
+      const newIncorrectChars = new Set(state.incorrectChars);
+      const newCorrectChars = new Set(state.correctChars);
+      
+      if (isCorrect) {
+        newCorrectChars.add(state.currentIndex);
+        // Remove from incorrect if it was there (user corrected it)
+        newIncorrectChars.delete(state.currentIndex);
+      } else {
+        newIncorrectChars.add(state.currentIndex);
+      }
+      
+      // If error immunity is active, treat incorrect characters as correct for progression
       const effectivelyCorrect = isCorrect || hasErrorImmunity;
       
       // Build the new typed text - only add the character if it's correct or we have immunity
@@ -182,16 +236,22 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const newStreak = effectivelyCorrect ? state.streak + 1 : 0;
       const newMaxStreak = Math.max(state.maxStreak, newStreak);
       
-      // Calculate WPM based on characters typed (including spaces)
+      // Calculate WPM based on time elapsed
       const timeElapsed = (Date.now() - (state.startTime || 0)) / 1000 / 60;
       const charactersTyped = newTypedText.length;
       const wordsTyped = charactersTyped / 5; // Standard: 5 characters = 1 word
-      const newWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
       
-      // Calculate accuracy based on total attempts vs correct characters
-      const totalAttempts = state.currentIndex + (effectivelyCorrect ? 1 : 0);
-      const correctCharacters = newTypedText.length;
-      const newAccuracy = totalAttempts > 0 ? Math.round((correctCharacters / totalAttempts) * 100) : 100;
+      // Raw WPM (includes errors)
+      const newRawWpm = timeElapsed > 0 ? Math.round((newTotalKeystrokes / 5) / timeElapsed) : 0;
+      
+      // Net WPM (corrected for errors)
+      const newNetWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+      const newWpm = newNetWpm; // Use net WPM as the main WPM metric
+      
+      // Calculate accuracy based on correct vs total characters attempted
+      const totalCharactersAttempted = Math.max(newIndex, state.currentIndex + 1);
+      const correctCharacters = newCorrectChars.size;
+      const newAccuracy = totalCharactersAttempted > 0 ? Math.round((correctCharacters / totalCharactersAttempted) * 100) : 100;
       
       let newScore = state.score;
       if (effectivelyCorrect) {
@@ -204,6 +264,18 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
 
       const gameFinished = newIndex >= state.currentText.length;
       
+      // Update WPM history every few characters for consistency tracking
+      let newWpmHistory = [...state.wpmHistory];
+      if (newIndex > 0 && newIndex % 10 === 0) {
+        newWpmHistory.push(newWpm);
+        // Keep only last 20 measurements
+        if (newWpmHistory.length > 20) {
+          newWpmHistory = newWpmHistory.slice(-20);
+        }
+      }
+      
+      const newConsistencyScore = calculateConsistency(newWpmHistory);
+      
       // Check for new achievements
       const newAchievements = checkAchievements({
         ...state,
@@ -213,6 +285,8 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
         score: newScore,
         errors: newErrors,
         currentIndex: newIndex,
+        consistencyScore: newConsistencyScore,
+        wpmHistory: newWpmHistory,
       });
 
       return {
@@ -225,12 +299,19 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
         streak: newStreak,
         maxStreak: newMaxStreak,
         wpm: newWpm,
+        rawWpm: newRawWpm,
+        netWpm: newNetWpm,
         accuracy: newAccuracy,
         score: newScore,
         gameStatus: gameFinished ? "finished" : state.gameStatus,
         endTime: gameFinished ? Date.now() : null,
         lastCharacterCorrect: effectivelyCorrect,
         achievements: [...state.achievements, ...newAchievements],
+        incorrectChars: newIncorrectChars,
+        correctChars: newCorrectChars,
+        totalKeystrokes: newTotalKeystrokes,
+        wpmHistory: newWpmHistory,
+        consistencyScore: newConsistencyScore,
       };
     }
 
@@ -243,17 +324,34 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const newTypedText = state.typedText.slice(0, -1);
       const newIndex = newTypedText.length; // Set index to match typed text length
       
-      // Recalculate errors based on the new typed text vs expected text
+      // Update character tracking - remove the character we're backspacing over
+      const newCorrectChars = new Set(state.correctChars);
+      const newIncorrectChars = new Set(state.incorrectChars);
+      
+      // Remove the character at the current position from tracking
+      newCorrectChars.delete(state.currentIndex - 1);
+      newIncorrectChars.delete(state.currentIndex - 1);
+      
+      // Recalculate errors based on the new state
       let newErrors = 0;
       for (let i = 0; i < newTypedText.length; i++) {
         if (newTypedText[i] !== state.currentText[i]) {
           newErrors++;
+          newIncorrectChars.add(i);
+        } else {
+          newCorrectChars.add(i);
         }
       }
       
       // Recalculate accuracy
-      const totalAttempts = Math.max(state.currentIndex, newTypedText.length);
-      const newAccuracy = totalAttempts > 0 ? Math.round((newTypedText.length / totalAttempts) * 100) : 100;
+      const totalAttempts = Math.max(newIndex, 1);
+      const correctCharacters = newCorrectChars.size;
+      const newAccuracy = totalAttempts > 0 ? Math.round((correctCharacters / totalAttempts) * 100) : 100;
+      
+      // Recalculate WPM
+      const timeElapsed = (Date.now() - (state.startTime || 0)) / 1000 / 60;
+      const wordsTyped = newTypedText.length / 5;
+      const newWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
       
       return {
         ...state,
@@ -261,8 +359,12 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
         currentIndex: newIndex,
         errors: newErrors,
         accuracy: newAccuracy,
+        wpm: newWpm,
         combo: Math.max(0, state.combo - 1),
         streak: Math.max(0, state.streak - 1),
+        correctChars: newCorrectChars,
+        incorrectChars: newIncorrectChars,
+        totalKeystrokes: state.totalKeystrokes + 1, // Backspace counts as a keystroke
       };
     }
 
@@ -350,6 +452,19 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       });
       
       return updated ? { ...state, powerUps: newPowerUps } : state;
+    }
+
+    case "UPDATE_WPM_HISTORY": {
+      const newWpmHistory = [...state.wpmHistory, state.wpm];
+      if (newWpmHistory.length > 20) {
+        newWpmHistory.shift();
+      }
+      
+      return {
+        ...state,
+        wpmHistory: newWpmHistory,
+        consistencyScore: calculateConsistency(newWpmHistory),
+      };
     }
 
     case "UPDATE_STATS":

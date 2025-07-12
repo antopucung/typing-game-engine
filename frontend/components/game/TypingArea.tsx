@@ -131,22 +131,35 @@ export function TypingArea() {
             // Already typed characters - compare with what was actually typed
             const typedChar = state.typedText[index];
             if (typedChar === char) {
-              className += "text-green-400 bg-green-400/20 ";
+              // Correct character
+              className += "text-green-400 ";
+              style.color = theme.colors.status.correct;
+              style.backgroundColor = `${theme.colors.status.correct}20`;
               style.textShadow = "0 0 4px rgba(34, 197, 94, 0.5)";
             } else {
-              className += "text-red-400 bg-red-400/20 ";
+              // Incorrect character
+              className += "text-red-400 ";
+              style.color = theme.colors.status.incorrect;
+              style.backgroundColor = `${theme.colors.status.incorrect}20`;
               style.textShadow = "0 0 4px rgba(239, 68, 68, 0.5)";
             }
           } else if (index === state.currentIndex) {
             // Current character (cursor position)
-            className += "text-yellow-400 bg-yellow-400/30 ";
+            className += "text-yellow-400 ";
             style.color = theme.colors.status.current;
             style.backgroundColor = `${theme.colors.status.current}40`;
+            style.borderRadius = "2px";
           } else {
             // Future characters (not yet typed)
             className += "text-gray-500 ";
             style.color = theme.colors.text.muted;
             style.opacity = 0.7;
+          }
+          
+          // Highlight incorrect characters that were previously typed incorrectly
+          if (state.incorrectChars.has(index) && index >= state.typedText.length) {
+            style.backgroundColor = `${theme.colors.status.incorrect}10`;
+            style.borderBottom = `2px solid ${theme.colors.status.incorrect}`;
           }
           
           return (

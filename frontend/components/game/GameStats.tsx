@@ -1,7 +1,7 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTypingEngine } from "../../hooks/useTypingEngine";
-import { Clock, Gauge, Target, Flame, Zap, Trophy } from "lucide-react";
+import { Clock, Gauge, Target, Flame, Zap, Trophy, Activity, TrendingUp } from "lucide-react";
 
 export function GameStats() {
   const { theme } = useTheme();
@@ -31,6 +31,12 @@ export function GameStats() {
     if (state.combo >= 25) return theme.colors.status.correct;
     if (state.combo >= 10) return theme.colors.primary;
     return theme.colors.text.muted;
+  };
+
+  const getConsistencyColor = () => {
+    if (state.consistencyScore >= 90) return theme.colors.status.correct;
+    if (state.consistencyScore >= 70) return theme.colors.status.current;
+    return theme.colors.status.incorrect;
   };
 
   const stats = [
@@ -77,6 +83,26 @@ export function GameStats() {
       pulse: false,
     },
   ];
+
+  // Add advanced stats for longer games
+  if (state.wpmHistory.length > 5) {
+    stats.push(
+      {
+        icon: Activity,
+        label: "Raw WPM",
+        value: state.rawWpm.toString(),
+        color: theme.colors.text.secondary,
+        pulse: false,
+      },
+      {
+        icon: TrendingUp,
+        label: "Consistency",
+        value: `${state.consistencyScore}%`,
+        color: getConsistencyColor(),
+        pulse: state.consistencyScore >= 90,
+      }
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">

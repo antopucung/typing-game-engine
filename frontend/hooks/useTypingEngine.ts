@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useTypingGame } from "../contexts/TypingGameContext";
 import { generateText } from "../utils/textGenerator";
+import backend from "~backend/client";
 
 export function useTypingEngine() {
   const { state, dispatch } = useTypingGame();
@@ -49,6 +50,37 @@ export function useTypingEngine() {
     dispatch({ type: "ACTIVATE_POWER_UP", payload: { powerUp } });
   }, [dispatch]);
 
+  const saveSession = useCallback(async () => {
+    if (state.gameStatus === "finished" && state.endTime && state.startTime) {
+      try {
+        const timeTaken = Math.round((state.endTime - state.startTime) / 1000);
+        const result = await backend.typing.saveSession({
+          wpm: state.wpm,
+          accuracy: state.accuracy,
+          score: state.score,
+          wordsTyped: Math.round(state.typedText.length / 5),
+          timeTaken,
+          difficulty: state.difficulty,
+        });
+        
+        if (result.isNewRecord) {
+          dispatch({ type: "ADD_ACHIEVEMENT", payload: { achievement: "New Personal Record!" } });
+        }
+        
+        return result;
+      } catch (error) {
+        console.error("Failed to save session:", error);
+      }
+    }
+  }, [state, dispatch]);
+
+  // Auto-save session when game finishes
+  useEffect(() => {
+    if (state.gameStatus === "finished" && state.endTime) {
+      saveSession();
+    }
+  }, [state.gameStatus, state.endTime, saveSession]);
+
   // Timer effect with power-up consideration
   useEffect(() => {
     if (state.gameStatus !== "playing") return;
@@ -85,5 +117,6 @@ export function useTypingEngine() {
     endGame,
     resetGame,
     activatePowerUp,
+    saveSession,
   };
 }
