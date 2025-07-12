@@ -5,9 +5,10 @@ interface TypingEffectsProps {
   comboEffect: boolean;
   errorEffect: boolean;
   combo: number;
+  errorPosition?: { x: number; y: number };
 }
 
-export function TypingEffects({ comboEffect, errorEffect, combo }: TypingEffectsProps) {
+export function TypingEffects({ comboEffect, errorEffect, combo, errorPosition }: TypingEffectsProps) {
   const { theme } = useTheme();
 
   return (
@@ -34,22 +35,20 @@ export function TypingEffects({ comboEffect, errorEffect, combo }: TypingEffects
         </div>
       )}
 
-      {/* Error effect overlay */}
-      {errorEffect && (
+      {/* Error effect overlay - positioned at cursor */}
+      {errorEffect && errorPosition && (
         <div style={{
           position: "absolute",
-          top: "20%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          fontSize: "2rem",
-          background: `linear-gradient(135deg, ${theme.colors.status.incorrect}, #dc2626)`,
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          textShadow: `0 0 20px ${theme.colors.status.incorrect}90`,
+          left: `${errorPosition.x}px`,
+          top: `${errorPosition.y - 40}px`,
+          transform: "translateX(-50%)",
+          fontSize: "2.5rem",
+          color: theme.colors.status.incorrect,
+          textShadow: `0 0 20px ${theme.colors.status.incorrect}90, 0 0 40px ${theme.colors.status.incorrect}60`,
           animation: "errorPopup 0.4s ease-out",
           pointerEvents: "none",
           zIndex: theme.zIndex.popover,
+          filter: "drop-shadow(0 0 10px rgba(239, 68, 68, 0.8))",
         }}>
           ❌
         </div>

@@ -61,6 +61,12 @@ export function TypingText({
                   lineHeight: "1.2",
                 };
                 
+                // Add data attribute for position tracking
+                charStyle = {
+                  ...charStyle,
+                  // We'll use a data attribute to identify character positions
+                };
+                
                 // Character state styling with enhanced gradient effects
                 if (currentCharIndex < typedText.length) {
                   const typedChar = typedText[currentCharIndex];
@@ -133,7 +139,11 @@ export function TypingText({
                 }
                 
                 return (
-                  <span key={charInWordIndex} style={charStyle}>
+                  <span 
+                    key={charInWordIndex} 
+                    style={charStyle}
+                    data-char-index={currentCharIndex}
+                  >
                     {char}
                   </span>
                 );
@@ -186,7 +196,14 @@ export function TypingText({
                     : `0 0 4px ${cursorColor}30`;
                 }
                 
-                return <span style={spaceStyle}> </span>;
+                return (
+                  <span 
+                    style={spaceStyle}
+                    data-char-index={spaceIndex}
+                  >
+                    {" "}
+                  </span>
+                );
               })()}
             </span>
           );

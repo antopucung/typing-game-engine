@@ -11,11 +11,13 @@ export function TypingArea() {
   const { theme } = useTheme();
   const { state, typeCharacter, handleBackspace } = useTypingEngine();
   const containerRef = useRef<HTMLDivElement>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [shakeAnimation, setShakeAnimation] = useState(false);
   const [lastTypedIndex, setLastTypedIndex] = useState(-1);
   const [comboEffect, setComboEffect] = useState(false);
   const [errorEffect, setErrorEffect] = useState(false);
+  const [errorPosition, setErrorPosition] = useState<{ x: number; y: number } | undefined>();
   const [recentlyTyped, setRecentlyTyped] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -72,6 +74,49 @@ export function TypingArea() {
     }
   }, [state.currentIndex, state.gameStatus]);
 
+  // Get cursor position for error popup
+  const getCursorPosition = () => {
+    if (!textContainerRef.current) return { x: 0, y: 0 };
+    
+    const container = textContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    
+    // Find the current character element
+    const currentCharElement = container.querySelector(`[data-char-index="${state.currentIndex}"]`) as HTMLElement;
+    
+    if (currentCharElement) {
+      const charRect = currentCharElement.getBoundingClientRect();
+      return {
+        x: charRect.left - containerRect.left + charRect.width / 2,
+        y: charRect.top - containerRect.top,
+      };
+    }
+    
+    // Fallback to approximate position
+    const fontSize = parseFloat(theme.typography.fontSize["2xl"]);
+    const lineHeight = fontSize * 1.5;
+    const charWidth = fontSize * 0.6;
+    
+    // Calculate approximate position based on character index
+    const wordsBeforeCursor = state.currentText.substring(0, state.currentIndex).split(' ');
+    const currentLineWords = [];
+    let currentLineLength = 0;
+    const maxLineLength = Math.floor(container.offsetWidth / charWidth);
+    
+    for (const word of wordsBeforeCursor) {
+      if (currentLineLength + word.length + 1 > maxLineLength && currentLineWords.length > 0) {
+        break;
+      }
+      currentLineWords.push(word);
+      currentLineLength += word.length + 1;
+    }
+    
+    const x = (currentLineLength % maxLineLength) * charWidth;
+    const y = Math.floor(currentLineLength / maxLineLength) * lineHeight;
+    
+    return { x, y };
+  };
+
   // Character typing effects
   useEffect(() => {
     if (state.currentIndex > lastTypedIndex) {
@@ -101,16 +146,19 @@ export function TypingArea() {
           setTimeout(() => setComboEffect(false), 600);
         }
       } else {
-        // Error effect
+        // Error effect with position
+        const position = getCursorPosition();
+        setErrorPosition(position);
         setErrorEffect(true);
         setShakeAnimation(true);
         setTimeout(() => {
           setErrorEffect(false);
           setShakeAnimation(false);
+          setErrorPosition(undefined);
         }, 400);
       }
     }
-  }, [state.currentIndex, state.lastCharacterCorrect, state.combo, lastTypedIndex]);
+  }, [state.currentIndex, state.lastCharacterCorrect, state.combo, lastTypedIndex, theme.typography.fontSize]);
 
   const cardStyle: React.CSSProperties = {
     flex: 1,
@@ -136,6 +184,7 @@ export function TypingArea() {
         comboEffect={comboEffect}
         errorEffect={errorEffect}
         combo={state.combo}
+        errorPosition={errorPosition}
       />
 
       <Card
@@ -158,7 +207,7 @@ export function TypingArea() {
             justifyContent: "center",
           }}
         >
-          <div style={{ maxWidth: "64rem", width: "100%" }}>
+          <div ref={textContainerRef} style={{ maxWidth: "64rem", width: "100%", position: "relative" }}>
             <TypingText
               currentText={state.currentText}
               typedText={state.typedText}
