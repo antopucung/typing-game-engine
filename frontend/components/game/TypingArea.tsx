@@ -86,110 +86,51 @@ export function TypingArea() {
   };
 
   const renderText = () => {
-    const words = state.currentText.split(' ');
-    let charIndex = 0;
-    
     return (
       <div className="leading-relaxed tracking-wide text-lg md:text-xl font-mono">
-        {words.map((word, wordIndex) => {
-          const wordStart = charIndex;
-          const wordEnd = charIndex + word.length;
-          const spaceIndex = wordEnd;
+        {state.currentText.split('').map((char, index) => {
+          let className = "relative inline-block transition-all duration-150 ";
+          let style: React.CSSProperties = {};
           
-          const wordElement = (
-            <span key={wordIndex} className="inline-block mr-2 mb-1">
-              {word.split('').map((char, charInWordIndex) => {
-                const currentCharIndex = wordStart + charInWordIndex;
-                let className = "relative inline-block transition-all duration-150 ";
-                let style: React.CSSProperties = {};
-                
-                if (currentCharIndex < state.currentIndex) {
-                  // Typed characters
-                  const typedChar = state.typedText[currentCharIndex];
-                  if (typedChar === char) {
-                    className += "text-green-400 bg-green-400/20 ";
-                    style.textShadow = "0 0 4px rgba(34, 197, 94, 0.5)";
-                  } else {
-                    className += "text-red-400 bg-red-400/20 ";
-                    style.textShadow = "0 0 4px rgba(239, 68, 68, 0.5)";
-                  }
-                } else if (currentCharIndex === state.currentIndex) {
-                  // Current character with blinking cursor
-                  className += "text-yellow-400 bg-yellow-400/30 ";
-                  style.color = theme.colors.status.current;
-                  style.backgroundColor = `${theme.colors.status.current}40`;
-                } else {
-                  // Untyped characters
-                  className += "text-gray-500 ";
-                  style.color = theme.colors.text.muted;
-                  style.opacity = 0.7;
-                }
-                
-                return (
-                  <span key={charInWordIndex} className={className} style={style}>
-                    {char}
-                    {currentCharIndex === state.currentIndex && state.gameStatus === "playing" && (
-                      <span 
-                        className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
-                          cursorVisible ? 'opacity-100' : 'opacity-0'
-                        }`}
-                        style={{ 
-                          left: '100%',
-                          backgroundColor: theme.colors.status.current,
-                          boxShadow: `0 0 8px ${theme.colors.status.current}`
-                        }}
-                      />
-                    )}
-                  </span>
-                );
-              })}
-              
-              {/* Handle space character */}
-              {wordIndex < words.length - 1 && (() => {
-                const spaceCharIndex = spaceIndex;
-                let spaceClassName = "inline-block w-2 ";
-                let spaceStyle: React.CSSProperties = {};
-                
-                if (spaceCharIndex < state.currentIndex) {
-                  const typedChar = state.typedText[spaceCharIndex];
-                  if (typedChar === ' ') {
-                    spaceClassName += "bg-green-400/20 ";
-                  } else {
-                    spaceClassName += "bg-red-400/20 ";
-                  }
-                } else if (spaceCharIndex === state.currentIndex) {
-                  spaceClassName += "bg-yellow-400/30 relative ";
-                  spaceStyle.backgroundColor = `${theme.colors.status.current}40`;
-                }
-                
-                charIndex = spaceIndex + 1; // Update for next word
-                
-                return (
-                  <span key={`space-${wordIndex}`} className={spaceClassName} style={spaceStyle}>
-                    {spaceCharIndex === state.currentIndex && state.gameStatus === "playing" && (
-                      <span 
-                        className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
-                          cursorVisible ? 'opacity-100' : 'opacity-0'
-                        }`}
-                        style={{ 
-                          left: '0',
-                          backgroundColor: theme.colors.status.current,
-                          boxShadow: `0 0 8px ${theme.colors.status.current}`
-                        }}
-                      />
-                    )}
-                    &nbsp;
-                  </span>
-                );
-              })()}
-            </span>
-          );
-          
-          if (wordIndex === words.length - 1) {
-            charIndex = wordEnd;
+          if (index < state.currentIndex) {
+            // Already typed characters
+            const typedChar = state.typedText[index];
+            if (typedChar === char) {
+              className += "text-green-400 bg-green-400/20 ";
+              style.textShadow = "0 0 4px rgba(34, 197, 94, 0.5)";
+            } else {
+              className += "text-red-400 bg-red-400/20 ";
+              style.textShadow = "0 0 4px rgba(239, 68, 68, 0.5)";
+            }
+          } else if (index === state.currentIndex) {
+            // Current character (cursor position)
+            className += "text-yellow-400 bg-yellow-400/30 ";
+            style.color = theme.colors.status.current;
+            style.backgroundColor = `${theme.colors.status.current}40`;
+          } else {
+            // Future characters (not yet typed)
+            className += "text-gray-500 ";
+            style.color = theme.colors.text.muted;
+            style.opacity = 0.7;
           }
           
-          return wordElement;
+          return (
+            <span key={index} className={className} style={style}>
+              {char === ' ' ? '\u00A0' : char}
+              {index === state.currentIndex && state.gameStatus === "playing" && (
+                <span 
+                  className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
+                    cursorVisible ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ 
+                    left: '100%',
+                    backgroundColor: theme.colors.status.current,
+                    boxShadow: `0 0 8px ${theme.colors.status.current}`
+                  }}
+                />
+              )}
+            </span>
+          );
         })}
         
         {/* Cursor at the end of text */}

@@ -75,19 +75,22 @@ export function useTypingEngine() {
     if (state.gameStatus !== "playing") return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default behavior for all typing-related keys
       if (event.ctrlKey || event.altKey || event.metaKey) return;
 
       if (event.key === "Backspace") {
         event.preventDefault();
         handleBackspace();
       } else if (event.key.length === 1) {
+        // Only handle single character keys (letters, numbers, symbols, spaces)
         event.preventDefault();
         typeCharacter(event.key);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Add event listener to the document to ensure it captures all key events
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [state.gameStatus, typeCharacter, handleBackspace]);
 
   return {

@@ -149,6 +149,12 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       if (state.gameStatus !== "playing") return state;
       
       const { character } = action.payload;
+      
+      // Prevent typing beyond the text length
+      if (state.currentIndex >= state.currentText.length) {
+        return state;
+      }
+      
       const expectedChar = state.currentText[state.currentIndex];
       const isCorrect = character === expectedChar;
       const hasErrorImmunity = state.powerUps.errorImmunity > 0;
@@ -156,6 +162,7 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       // If error immunity is active, treat incorrect characters as correct
       const effectivelyCorrect = isCorrect || hasErrorImmunity;
       
+      // Build the new typed text character by character
       const newTypedText = state.typedText + character;
       const newIndex = state.currentIndex + 1;
       const newErrors = effectivelyCorrect ? state.errors : state.errors + 1;
@@ -216,10 +223,19 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const newTypedText = state.typedText.slice(0, -1);
       const newIndex = state.currentIndex - 1;
       
+      // Recalculate errors based on the new typed text
+      let newErrors = 0;
+      for (let i = 0; i < newTypedText.length; i++) {
+        if (newTypedText[i] !== state.currentText[i]) {
+          newErrors++;
+        }
+      }
+      
       return {
         ...state,
         typedText: newTypedText,
         currentIndex: newIndex,
+        errors: newErrors,
         combo: Math.max(0, state.combo - 1),
         streak: Math.max(0, state.streak - 1),
       };
