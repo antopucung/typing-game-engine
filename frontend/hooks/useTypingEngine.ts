@@ -10,19 +10,24 @@ export function useTypingEngine() {
       dispatch({ type: "SET_DIFFICULTY", payload: { difficulty } });
     }
     
-    const text = generateText(state.difficulty);
-    const timeLimit = difficulty === "easy" ? 90 : difficulty === "medium" ? 60 : 45;
+    const currentDifficulty = difficulty || state.difficulty;
+    const text = generateText(currentDifficulty);
+    const timeLimit = currentDifficulty === "easy" ? 90 : currentDifficulty === "medium" ? 60 : 45;
     
     dispatch({ type: "START_GAME", payload: { text, timeLimit } });
   }, [state.difficulty, dispatch]);
 
   const typeCharacter = useCallback((character: string) => {
-    dispatch({ type: "TYPE_CHARACTER", payload: { character } });
-  }, [dispatch]);
+    if (state.gameStatus === "playing") {
+      dispatch({ type: "TYPE_CHARACTER", payload: { character } });
+    }
+  }, [dispatch, state.gameStatus]);
 
   const handleBackspace = useCallback(() => {
-    dispatch({ type: "BACKSPACE" });
-  }, [dispatch]);
+    if (state.gameStatus === "playing") {
+      dispatch({ type: "BACKSPACE" });
+    }
+  }, [dispatch, state.gameStatus]);
 
   const pauseGame = useCallback(() => {
     dispatch({ type: "PAUSE_GAME" });
@@ -70,14 +75,16 @@ export function useTypingEngine() {
     return () => clearInterval(interval);
   }, [state.gameStatus, dispatch]);
 
-  // Keyboard event handling
+  // Keyboard event handling - Fixed to work properly
   useEffect(() => {
-    if (state.gameStatus !== "playing") return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Prevent default behavior for all typing-related keys
+      // Only handle keyboard input when game is playing
+      if (state.gameStatus !== "playing") return;
+      
+      // Don't interfere with browser shortcuts
       if (event.ctrlKey || event.altKey || event.metaKey) return;
-
+      
+      // Prevent default behavior for typing keys
       if (event.key === "Backspace") {
         event.preventDefault();
         handleBackspace();
@@ -92,6 +99,19 @@ export function useTypingEngine() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [state.gameStatus, typeCharacter, handleBackspace]);
+
+  // Focus management - ensure the game area can receive focus
+  useEffect(() => {
+    if (state.gameStatus === "playing") {
+      // Small delay to ensure the DOM is ready
+      const timer = setTimeout(() => {
+        // Try to focus the document body to ensure keyboard events are captured
+        document.body.focus();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [state.gameStatus]);
 
   return {
     state,

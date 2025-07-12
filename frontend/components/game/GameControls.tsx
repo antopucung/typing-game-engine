@@ -13,6 +13,10 @@ export function GameControls() {
     startGame(difficulty);
   };
 
+  const handleStartGame = () => {
+    startGame();
+  };
+
   if (state.gameStatus === "idle") {
     return (
       <div className="flex flex-col items-center space-y-6">
@@ -40,7 +44,7 @@ export function GameControls() {
           />
           
           <Button
-            onClick={() => startGame()}
+            onClick={handleStartGame}
             variant="primary"
             size="lg"
             icon={Play}
@@ -97,7 +101,7 @@ export function GameControls() {
   return (
     <div className="flex justify-center space-x-4">
       <Button
-        onClick={() => startGame()}
+        onClick={handleStartGame}
         variant="primary"
         icon={Play}
       >

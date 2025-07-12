@@ -11,9 +11,12 @@ export function TypingArea() {
   const [flash, setFlash] = useState<'correct' | 'incorrect' | null>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
 
+  // Focus the container when game starts
   useEffect(() => {
     if (containerRef.current && state.gameStatus === "playing") {
       containerRef.current.focus();
+      // Also ensure the container is focusable
+      containerRef.current.setAttribute('tabindex', '0');
     }
   }, [state.gameStatus]);
 
@@ -257,6 +260,12 @@ export function TypingArea() {
             : 'none'
         }}
         tabIndex={0}
+        onClick={() => {
+          // Ensure focus when clicked
+          if (containerRef.current && state.gameStatus === "playing") {
+            containerRef.current.focus();
+          }
+        }}
       >
         <div className="relative">
           {renderText()}
