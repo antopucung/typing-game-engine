@@ -15,22 +15,22 @@ export function TypingAnimations() {
       @keyframes correctGradientPulse {
         0% { 
           transform: scale(1); 
-          box-shadow: 0 0 8px ${theme.colors.status.correct}40;
+          box-shadow: 0 0 6px ${theme.colors.status.correct}40;
           opacity: 0.85;
         }
         30% { 
-          transform: scale(1.2); 
-          box-shadow: 0 0 30px ${theme.colors.status.correct}90, 0 0 60px ${theme.colors.status.correct}50;
+          transform: scale(1.1); 
+          box-shadow: 0 0 20px ${theme.colors.status.correct}90, 0 0 40px ${theme.colors.status.correct}50;
           opacity: 1;
         }
         70% { 
-          transform: scale(1.1); 
-          box-shadow: 0 0 25px ${theme.colors.status.correct}80, 0 0 50px ${theme.colors.status.correct}40;
+          transform: scale(1.05); 
+          box-shadow: 0 0 15px ${theme.colors.status.correct}80, 0 0 30px ${theme.colors.status.correct}40;
           opacity: 0.95;
         }
         100% { 
           transform: scale(1); 
-          box-shadow: 0 0 8px ${theme.colors.status.correct}40;
+          box-shadow: 0 0 6px ${theme.colors.status.correct}40;
           opacity: 0.85;
         }
       }
@@ -38,63 +38,63 @@ export function TypingAnimations() {
       @keyframes errorGradientShake {
         0% { 
           transform: scale(1) rotate(0deg); 
-          box-shadow: 0 0 12px ${theme.colors.status.incorrect}60;
+          box-shadow: 0 0 10px ${theme.colors.status.incorrect}60;
           opacity: 0.9;
         }
         15% { 
-          transform: scale(1.2) rotate(-2deg); 
-          box-shadow: 0 0 35px ${theme.colors.status.incorrect}95, 0 0 70px ${theme.colors.status.incorrect}60;
+          transform: scale(1.15) rotate(-2deg); 
+          box-shadow: 0 0 25px ${theme.colors.status.incorrect}95, 0 0 50px ${theme.colors.status.incorrect}60;
           opacity: 1;
         }
         30% { 
-          transform: scale(1.15) rotate(2deg); 
-          box-shadow: 0 0 30px ${theme.colors.status.incorrect}90, 0 0 60px ${theme.colors.status.incorrect}50;
+          transform: scale(1.1) rotate(2deg); 
+          box-shadow: 0 0 20px ${theme.colors.status.incorrect}90, 0 0 40px ${theme.colors.status.incorrect}50;
         }
         45% { 
-          transform: scale(1.1) rotate(-1deg); 
-          box-shadow: 0 0 25px ${theme.colors.status.incorrect}85, 0 0 50px ${theme.colors.status.incorrect}45;
+          transform: scale(1.05) rotate(-1deg); 
+          box-shadow: 0 0 15px ${theme.colors.status.incorrect}85, 0 0 30px ${theme.colors.status.incorrect}45;
         }
         60% { 
-          transform: scale(1.05) rotate(1deg); 
-          box-shadow: 0 0 20px ${theme.colors.status.incorrect}80, 0 0 40px ${theme.colors.status.incorrect}40;
+          transform: scale(1.02) rotate(1deg); 
+          box-shadow: 0 0 12px ${theme.colors.status.incorrect}80, 0 0 25px ${theme.colors.status.incorrect}40;
         }
         100% { 
           transform: scale(1) rotate(0deg); 
-          box-shadow: 0 0 12px ${theme.colors.status.incorrect}60;
+          box-shadow: 0 0 10px ${theme.colors.status.incorrect}60;
           opacity: 0.9;
         }
       }
       
       @keyframes cursorGradientPulse {
         0%, 100% { 
-          box-shadow: 0 0 25px ${theme.colors.status.current}90, 0 0 50px ${theme.colors.status.current}50, inset 0 0 15px ${theme.colors.status.current}60;
-          transform: scale(1.08);
+          box-shadow: 0 0 20px ${theme.colors.status.current}90, 0 0 40px ${theme.colors.status.current}50, inset 0 0 12px ${theme.colors.status.current}60;
+          transform: scale(1.05);
         }
         50% { 
-          box-shadow: 0 0 35px ${theme.colors.status.current}95, 0 0 70px ${theme.colors.status.current}70, inset 0 0 20px ${theme.colors.status.current}80;
-          transform: scale(1.12);
+          box-shadow: 0 0 25px ${theme.colors.status.current}95, 0 0 50px ${theme.colors.status.current}70, inset 0 0 15px ${theme.colors.status.current}80;
+          transform: scale(1.08);
         }
       }
       
       @keyframes comboRainbowGlow {
         0% { 
-          box-shadow: 0 0 15px ${theme.colors.accent}60;
+          box-shadow: 0 0 12px ${theme.colors.accent}60;
           background: linear-gradient(135deg, ${theme.colors.accent}80, ${theme.colors.primary}80);
         }
         25% { 
-          box-shadow: 0 0 40px ${theme.colors.accent}90, 0 0 80px ${theme.colors.primary}70;
+          box-shadow: 0 0 30px ${theme.colors.accent}90, 0 0 60px ${theme.colors.primary}70;
           background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.status.correct}, ${theme.colors.accent});
         }
         50% { 
-          box-shadow: 0 0 50px ${theme.colors.status.correct}95, 0 0 100px ${theme.colors.accent}80;
+          box-shadow: 0 0 35px ${theme.colors.status.correct}95, 0 0 70px ${theme.colors.accent}80;
           background: linear-gradient(135deg, ${theme.colors.status.correct}, ${theme.colors.accent}, ${theme.colors.primary});
         }
         75% { 
-          box-shadow: 0 0 45px ${theme.colors.primary}90, 0 0 90px ${theme.colors.status.correct}75;
+          box-shadow: 0 0 32px ${theme.colors.primary}90, 0 0 65px ${theme.colors.status.correct}75;
           background: linear-gradient(135deg, ${theme.colors.accent}, ${theme.colors.primary}, ${theme.colors.status.correct});
         }
         100% { 
-          box-shadow: 0 0 20px ${theme.colors.accent}70;
+          box-shadow: 0 0 15px ${theme.colors.accent}70;
           background: linear-gradient(135deg, ${theme.colors.accent}80, ${theme.colors.primary}80);
         }
       }
