@@ -35,14 +35,14 @@ export function TypingEffects({ comboEffect, errorEffect, combo, errorPosition }
         </div>
       )}
 
-      {/* Error effect overlay - positioned at cursor */}
+      {/* Error effect overlay - positioned at the incorrect character */}
       {errorEffect && errorPosition && (
         <div style={{
           position: "absolute",
           left: `${errorPosition.x}px`,
-          top: `${errorPosition.y - 40}px`,
-          transform: "translateX(-50%)",
-          fontSize: "2.5rem",
+          top: `${errorPosition.y}px`,
+          transform: "translate(-50%, -50%)",
+          fontSize: "2rem",
           color: theme.colors.status.incorrect,
           textShadow: `0 0 20px ${theme.colors.status.incorrect}90, 0 0 40px ${theme.colors.status.incorrect}60`,
           animation: "errorPopup 0.4s ease-out",

@@ -82,13 +82,13 @@ export function TypingArea() {
     const containerRect = container.getBoundingClientRect();
     
     // Find the current character element
-    const currentCharElement = container.querySelector(`[data-char-index="${state.currentIndex}"]`) as HTMLElement;
+    const currentCharElement = container.querySelector(`[data-char-index="${state.currentIndex - 1}"]`) as HTMLElement;
     
     if (currentCharElement) {
       const charRect = currentCharElement.getBoundingClientRect();
       return {
         x: charRect.left - containerRect.left + charRect.width / 2,
-        y: charRect.top - containerRect.top,
+        y: charRect.top - containerRect.top + charRect.height / 2,
       };
     }
     
@@ -146,7 +146,7 @@ export function TypingArea() {
           setTimeout(() => setComboEffect(false), 600);
         }
       } else {
-        // Error effect with position
+        // Error effect with position - get position of the incorrectly typed character
         const position = getCursorPosition();
         setErrorPosition(position);
         setErrorEffect(true);
