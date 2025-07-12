@@ -9,12 +9,33 @@ export function TypingArea() {
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; type: 'correct' | 'incorrect' }>>([]);
   const [shake, setShake] = useState(false);
   const [flash, setFlash] = useState<'correct' | 'incorrect' | null>(null);
+  const [cursorVisible, setCursorVisible] = useState(true);
 
   useEffect(() => {
     if (containerRef.current && state.gameStatus === "playing") {
       containerRef.current.focus();
     }
   }, [state.gameStatus]);
+
+  // Blinking cursor effect
+  useEffect(() => {
+    if (state.gameStatus === "playing") {
+      const interval = setInterval(() => {
+        setCursorVisible(prev => !prev);
+      }, 530); // Standard cursor blink rate
+      
+      return () => clearInterval(interval);
+    } else {
+      setCursorVisible(true);
+    }
+  }, [state.gameStatus]);
+
+  // Reset cursor visibility on typing
+  useEffect(() => {
+    if (state.gameStatus === "playing") {
+      setCursorVisible(true);
+    }
+  }, [state.currentIndex, state.gameStatus]);
 
   // Add particle effect when typing
   useEffect(() => {
@@ -65,53 +86,126 @@ export function TypingArea() {
   };
 
   const renderText = () => {
-    return state.currentText.split("").map((char, index) => {
-      let className = "text-lg md:text-xl transition-all duration-200 ";
-      let style: React.CSSProperties = {};
-
-      if (index < state.currentIndex) {
-        // Typed characters
-        const typedChar = state.typedText[index];
-        if (typedChar === char) {
-          className += "font-medium transform scale-105";
-          style.color = theme.colors.status.correct;
-          style.backgroundColor = `${theme.colors.status.correct}30`;
-          style.textShadow = `0 0 8px ${theme.colors.status.correct}50`;
-        } else {
-          className += "font-medium animate-pulse";
-          style.color = theme.colors.status.incorrect;
-          style.backgroundColor = `${theme.colors.status.incorrect}30`;
-          style.textShadow = `0 0 8px ${theme.colors.status.incorrect}50`;
-        }
-      } else if (index === state.currentIndex) {
-        // Current character with enhanced cursor
-        className += "font-bold animate-bounce relative";
-        style.color = theme.colors.status.current;
-        style.backgroundColor = `${theme.colors.status.current}40`;
-        style.textShadow = `0 0 12px ${theme.colors.status.current}`;
-        style.transform = "scale(1.2)";
-      } else {
-        // Untyped characters
-        style.color = theme.colors.text.muted;
-        style.opacity = 0.6;
-      }
-
-      return (
-        <span key={index} className={className} style={style}>
-          {char}
-          {index === state.currentIndex && (
-            <span 
-              className="absolute -top-1 -bottom-1 w-0.5 animate-pulse"
-              style={{ 
-                backgroundColor: theme.colors.status.current,
-                boxShadow: `0 0 8px ${theme.colors.status.current}`,
-                left: '100%'
-              }}
-            />
-          )}
-        </span>
-      );
-    });
+    const words = state.currentText.split(' ');
+    let charIndex = 0;
+    
+    return (
+      <div className="leading-relaxed tracking-wide text-lg md:text-xl font-mono">
+        {words.map((word, wordIndex) => {
+          const wordStart = charIndex;
+          const wordEnd = charIndex + word.length;
+          const spaceIndex = wordEnd;
+          
+          const wordElement = (
+            <span key={wordIndex} className="inline-block mr-2 mb-1">
+              {word.split('').map((char, charInWordIndex) => {
+                const currentCharIndex = wordStart + charInWordIndex;
+                let className = "relative inline-block transition-all duration-150 ";
+                let style: React.CSSProperties = {};
+                
+                if (currentCharIndex < state.currentIndex) {
+                  // Typed characters
+                  const typedChar = state.typedText[currentCharIndex];
+                  if (typedChar === char) {
+                    className += "text-green-400 bg-green-400/20 ";
+                    style.textShadow = "0 0 4px rgba(34, 197, 94, 0.5)";
+                  } else {
+                    className += "text-red-400 bg-red-400/20 ";
+                    style.textShadow = "0 0 4px rgba(239, 68, 68, 0.5)";
+                  }
+                } else if (currentCharIndex === state.currentIndex) {
+                  // Current character with blinking cursor
+                  className += "text-yellow-400 bg-yellow-400/30 ";
+                  style.color = theme.colors.status.current;
+                  style.backgroundColor = `${theme.colors.status.current}40`;
+                } else {
+                  // Untyped characters
+                  className += "text-gray-500 ";
+                  style.color = theme.colors.text.muted;
+                  style.opacity = 0.7;
+                }
+                
+                return (
+                  <span key={charInWordIndex} className={className} style={style}>
+                    {char}
+                    {currentCharIndex === state.currentIndex && state.gameStatus === "playing" && (
+                      <span 
+                        className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
+                          cursorVisible ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        style={{ 
+                          left: '100%',
+                          backgroundColor: theme.colors.status.current,
+                          boxShadow: `0 0 8px ${theme.colors.status.current}`
+                        }}
+                      />
+                    )}
+                  </span>
+                );
+              })}
+              
+              {/* Handle space character */}
+              {wordIndex < words.length - 1 && (() => {
+                const spaceCharIndex = spaceIndex;
+                let spaceClassName = "inline-block w-2 ";
+                let spaceStyle: React.CSSProperties = {};
+                
+                if (spaceCharIndex < state.currentIndex) {
+                  const typedChar = state.typedText[spaceCharIndex];
+                  if (typedChar === ' ') {
+                    spaceClassName += "bg-green-400/20 ";
+                  } else {
+                    spaceClassName += "bg-red-400/20 ";
+                  }
+                } else if (spaceCharIndex === state.currentIndex) {
+                  spaceClassName += "bg-yellow-400/30 relative ";
+                  spaceStyle.backgroundColor = `${theme.colors.status.current}40`;
+                }
+                
+                charIndex = spaceIndex + 1; // Update for next word
+                
+                return (
+                  <span key={`space-${wordIndex}`} className={spaceClassName} style={spaceStyle}>
+                    {spaceCharIndex === state.currentIndex && state.gameStatus === "playing" && (
+                      <span 
+                        className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
+                          cursorVisible ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        style={{ 
+                          left: '0',
+                          backgroundColor: theme.colors.status.current,
+                          boxShadow: `0 0 8px ${theme.colors.status.current}`
+                        }}
+                      />
+                    )}
+                    &nbsp;
+                  </span>
+                );
+              })()}
+            </span>
+          );
+          
+          if (wordIndex === words.length - 1) {
+            charIndex = wordEnd;
+          }
+          
+          return wordElement;
+        })}
+        
+        {/* Cursor at the end of text */}
+        {state.currentIndex >= state.currentText.length && state.gameStatus === "playing" && (
+          <span 
+            className={`inline-block w-0.5 h-6 bg-current transition-opacity duration-75 ${
+              cursorVisible ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ 
+              backgroundColor: theme.colors.status.current,
+              boxShadow: `0 0 8px ${theme.colors.status.current}`
+            }}
+          />
+        )}
+      </div>
+    );
   };
 
   if (state.gameStatus === "paused") {
@@ -224,7 +318,7 @@ export function TypingArea() {
         }}
         tabIndex={0}
       >
-        <div className="leading-relaxed tracking-wide relative">
+        <div className="relative">
           {renderText()}
         </div>
         
