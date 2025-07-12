@@ -6,9 +6,6 @@ export function TypingArea() {
   const { theme } = useTheme();
   const { state, typeCharacter, handleBackspace } = useTypingEngine();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; type: 'correct' | 'incorrect' }>>([]);
-  const [shake, setShake] = useState(false);
-  const [flash, setFlash] = useState<'correct' | 'incorrect' | null>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
 
   // Focus the container when game starts
@@ -72,122 +69,95 @@ export function TypingArea() {
     }
   }, [state.currentIndex, state.gameStatus]);
 
-  // Add particle effect when typing
-  useEffect(() => {
-    if (state.currentIndex > 0 && state.typedText.length > 0) {
-      // Check if the last action was correct or incorrect
-      const lastTypedChar = state.typedText[state.typedText.length - 1];
-      const expectedChar = state.currentText[state.typedText.length - 1];
-      const isCorrect = lastTypedChar === expectedChar;
-      
-      // Add particle
-      const newParticle = {
-        id: Date.now(),
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        type: isCorrect ? 'correct' as const : 'incorrect' as const
-      };
-      
-      setParticles(prev => [...prev, newParticle]);
-      
-      // Flash effect
-      setFlash(isCorrect ? 'correct' : 'incorrect');
-      setTimeout(() => setFlash(null), 150);
-      
-      // Shake on error
-      if (!isCorrect) {
-        setShake(true);
-        setTimeout(() => setShake(false), 300);
-      }
-      
-      // Remove particle after animation
-      setTimeout(() => {
-        setParticles(prev => prev.filter(p => p.id !== newParticle.id));
-      }, 1000);
-    }
-  }, [state.typedText.length, state.currentText]);
-
-  const getComboColor = () => {
-    if (state.combo >= 50) return theme.colors.accent;
-    if (state.combo >= 25) return theme.colors.status.correct;
-    if (state.combo >= 10) return theme.colors.primary;
-    return theme.colors.text.muted;
-  };
-
-  const getComboScale = () => {
-    if (state.combo >= 50) return "scale-125";
-    if (state.combo >= 25) return "scale-110";
-    if (state.combo >= 10) return "scale-105";
-    return "scale-100";
-  };
-
   const renderText = () => {
+    const words = state.currentText.split(' ');
+    let charIndex = 0;
+
     return (
-      <div className="leading-relaxed tracking-wide text-lg md:text-xl font-mono">
-        {state.currentText.split('').map((char, index) => {
-          let className = "relative inline-block transition-all duration-150 ";
-          let style: React.CSSProperties = {};
+      <div className="text-center leading-relaxed">
+        {words.map((word, wordIndex) => {
+          const wordStart = charIndex;
+          const wordEnd = charIndex + word.length;
+          const wordChars = word.split('');
           
-          if (index < state.typedText.length) {
-            // Already typed characters - compare with what was actually typed
-            const typedChar = state.typedText[index];
-            if (typedChar === char) {
-              // Correct character
-              className += "text-green-400 ";
-              style.color = theme.colors.status.correct;
-              style.backgroundColor = `${theme.colors.status.correct}20`;
-              style.textShadow = "0 0 4px rgba(34, 197, 94, 0.5)";
-            } else {
-              // Incorrect character
-              className += "text-red-400 ";
-              style.color = theme.colors.status.incorrect;
-              style.backgroundColor = `${theme.colors.status.incorrect}20`;
-              style.textShadow = "0 0 4px rgba(239, 68, 68, 0.5)";
-            }
-          } else if (index === state.currentIndex) {
-            // Current character (cursor position)
-            className += "text-yellow-400 ";
-            style.color = theme.colors.status.current;
-            style.backgroundColor = `${theme.colors.status.current}40`;
-            style.borderRadius = "2px";
-          } else {
-            // Future characters (not yet typed)
-            className += "text-gray-500 ";
-            style.color = theme.colors.text.muted;
-            style.opacity = 0.7;
-          }
-          
-          return (
-            <span key={index} className={className} style={style}>
-              {char === ' ' ? '\u00A0' : char}
-              {index === state.currentIndex && state.gameStatus === "playing" && (
-                <span 
-                  className={`absolute top-0 bottom-0 w-0.5 bg-current transition-opacity duration-75 ${
-                    cursorVisible ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  style={{ 
-                    left: '100%',
-                    backgroundColor: theme.colors.status.current,
-                    boxShadow: `0 0 8px ${theme.colors.status.current}`
-                  }}
-                />
-              )}
+          const wordElement = (
+            <span key={wordIndex} className="inline-block mx-1 my-1">
+              {wordChars.map((char, charInWordIndex) => {
+                const currentCharIndex = wordStart + charInWordIndex;
+                let className = "relative inline-block transition-all duration-100 ";
+                let style: React.CSSProperties = {
+                  fontSize: '1.5rem',
+                  fontFamily: 'monospace',
+                  padding: '2px 1px',
+                  borderRadius: '3px',
+                };
+                
+                if (currentCharIndex < state.typedText.length) {
+                  // Already typed characters
+                  const typedChar = state.typedText[currentCharIndex];
+                  if (typedChar === char) {
+                    // Correct character
+                    style.color = theme.colors.status.correct;
+                    style.backgroundColor = `${theme.colors.status.correct}15`;
+                  } else {
+                    // Incorrect character
+                    style.color = theme.colors.status.incorrect;
+                    style.backgroundColor = `${theme.colors.status.incorrect}15`;
+                  }
+                } else if (currentCharIndex === state.currentIndex) {
+                  // Current character (cursor position)
+                  style.color = theme.colors.text.primary;
+                  style.backgroundColor = state.gameStatus === "playing" && cursorVisible 
+                    ? theme.colors.status.current 
+                    : `${theme.colors.status.current}30`;
+                } else {
+                  // Future characters (not yet typed)
+                  style.color = theme.colors.text.muted;
+                  style.opacity = 0.6;
+                }
+                
+                return (
+                  <span key={charInWordIndex} className={className} style={style}>
+                    {char}
+                  </span>
+                );
+              })}
+              
+              {/* Space character handling */}
+              {wordIndex < words.length - 1 && (() => {
+                const spaceIndex = wordEnd;
+                let spaceStyle: React.CSSProperties = {
+                  fontSize: '1.5rem',
+                  fontFamily: 'monospace',
+                  padding: '2px 4px',
+                  borderRadius: '3px',
+                  display: 'inline-block',
+                  minWidth: '8px',
+                };
+                
+                if (spaceIndex < state.typedText.length) {
+                  // Space already typed
+                  const typedChar = state.typedText[spaceIndex];
+                  if (typedChar === ' ') {
+                    spaceStyle.backgroundColor = `${theme.colors.status.correct}15`;
+                  } else {
+                    spaceStyle.backgroundColor = `${theme.colors.status.incorrect}15`;
+                  }
+                } else if (spaceIndex === state.currentIndex) {
+                  // Current space (cursor position)
+                  spaceStyle.backgroundColor = state.gameStatus === "playing" && cursorVisible 
+                    ? theme.colors.status.current 
+                    : `${theme.colors.status.current}30`;
+                }
+                
+                return <span style={spaceStyle}> </span>;
+              })()}
             </span>
           );
+          
+          charIndex = wordEnd + 1; // +1 for the space
+          return wordElement;
         })}
-        
-        {/* Cursor at the end of text */}
-        {state.currentIndex >= state.currentText.length && state.gameStatus === "playing" && (
-          <span 
-            className={`inline-block w-0.5 h-6 bg-current transition-opacity duration-75 ${
-              cursorVisible ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{ 
-              backgroundColor: theme.colors.status.current,
-              boxShadow: `0 0 8px ${theme.colors.status.current}`
-            }}
-          />
-        )}
       </div>
     );
   };
@@ -214,89 +184,17 @@ export function TypingArea() {
 
   return (
     <div className="relative">
-      {/* Combo Display */}
-      {state.combo > 0 && (
-        <div 
-          className={`absolute -top-16 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-300 ${getComboScale()}`}
-          style={{ color: getComboColor() }}
-        >
-          <div className="text-center">
-            <div className="text-3xl font-bold animate-pulse">
-              {state.combo}x
-            </div>
-            <div className="text-sm font-medium">
-              COMBO!
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Streak Indicator */}
-      {state.combo >= 10 && (
-        <div className="absolute -top-8 right-4 z-20">
-          <div 
-            className="px-3 py-1 rounded-full text-sm font-bold animate-pulse"
-            style={{ 
-              backgroundColor: `${getComboColor()}20`,
-              color: getComboColor(),
-              border: `2px solid ${getComboColor()}`
-            }}
-          >
-            🔥 ON FIRE!
-          </div>
-        </div>
-      )}
-
-      {/* Flash Effect */}
-      {flash && (
-        <div 
-          className="absolute inset-0 rounded-lg pointer-events-none z-10 animate-ping"
-          style={{ 
-            backgroundColor: flash === 'correct' 
-              ? `${theme.colors.status.correct}20` 
-              : `${theme.colors.status.incorrect}20`,
-            border: `2px solid ${flash === 'correct' 
-              ? theme.colors.status.correct 
-              : theme.colors.status.incorrect}`
-          }}
-        />
-      )}
-
-      {/* Particles */}
-      {particles.map(particle => (
-        <div
-          key={particle.id}
-          className="absolute pointer-events-none z-15 animate-ping"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            color: particle.type === 'correct' 
-              ? theme.colors.status.correct 
-              : theme.colors.status.incorrect,
-            fontSize: '1.5rem',
-            animation: 'float-up 1s ease-out forwards'
-          }}
-        >
-          {particle.type === 'correct' ? '✨' : '💥'}
-        </div>
-      ))}
-
       <div 
         ref={containerRef}
-        className={`flex-1 p-6 md:p-8 rounded-lg focus:outline-none cursor-text overflow-auto transition-all duration-200 ${
-          shake ? 'animate-shake' : ''
-        }`}
+        className="flex-1 p-8 rounded-lg focus:outline-none cursor-text overflow-hidden transition-all duration-200"
         style={{ 
           backgroundColor: theme.colors.surface,
           border: `2px solid ${
-            flash === 'correct' ? theme.colors.status.correct :
-            flash === 'incorrect' ? theme.colors.status.incorrect :
             state.gameStatus === "playing" ? theme.colors.ui.focus : theme.colors.ui.border
           }`,
-          minHeight: "200px",
-          boxShadow: flash 
-            ? `0 0 20px ${flash === 'correct' ? theme.colors.status.correct : theme.colors.status.incorrect}50`
-            : state.gameStatus === "playing" 
+          minHeight: "300px",
+          maxHeight: "400px",
+          boxShadow: state.gameStatus === "playing" 
             ? `0 0 15px ${theme.colors.ui.focus}30`
             : 'none'
         }}
@@ -308,42 +206,21 @@ export function TypingArea() {
           }
         }}
       >
-        <div className="relative">
-          {renderText()}
+        <div className="flex items-center justify-center h-full">
+          <div className="max-w-4xl w-full">
+            {renderText()}
+          </div>
         </div>
         
         {state.gameStatus === "playing" && (
           <div 
-            className="mt-6 text-sm text-center animate-pulse"
+            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-sm text-center animate-pulse"
             style={{ color: theme.colors.text.muted }}
           >
-            Click here and start typing! {state.currentText ? `(${state.currentText.length} characters)` : ''}
+            Click here and start typing!
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes float-up {
-          0% {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-50px) scale(1.5);
-            opacity: 0;
-          }
-        }
-        
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-          20%, 40%, 60%, 80% { transform: translateX(2px); }
-        }
-        
-        .animate-shake {
-          animation: shake 0.3s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

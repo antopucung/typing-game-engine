@@ -58,7 +58,7 @@ export function GameControls() {
 
   if (state.gameStatus === "playing") {
     return (
-      <div className="flex justify-center space-x-4">
+      <div className="flex justify-center space-x-4 mt-6">
         <Button
           onClick={pauseGame}
           variant="secondary"

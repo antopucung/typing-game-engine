@@ -6,7 +6,6 @@ import { TypingArea } from "./game/TypingArea";
 import { GameStats } from "./game/GameStats";
 import { GameControls } from "./game/GameControls";
 import { GameResults } from "./game/GameResults";
-import { PowerUps } from "./game/PowerUps";
 
 export function TypingGameApp() {
   const { state } = useTypingEngine();
@@ -22,9 +21,8 @@ export function TypingGameApp() {
       )}
       
       {(state.gameStatus === "playing" || state.gameStatus === "paused") && (
-        <div className="flex-1 flex flex-col space-y-4">
+        <div className="flex-1 flex flex-col">
           <GameStats />
-          <PowerUps />
           <TypingArea />
           <GameControls />
         </div>
