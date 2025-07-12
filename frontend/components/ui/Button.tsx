@@ -10,6 +10,7 @@ interface ButtonProps {
   size?: "sm" | "md" | "lg";
   icon?: LucideIcon;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function Button({ 
@@ -19,7 +20,8 @@ export function Button({
   variant = "primary", 
   size = "md",
   icon: Icon,
-  className = ""
+  className = "",
+  style = {}
 }: ButtonProps) {
   const { theme } = useTheme();
 
@@ -30,6 +32,7 @@ export function Button({
           backgroundColor: theme.colors.primary,
           color: "white",
           border: `1px solid ${theme.colors.primary}`,
+          boxShadow: `0 0 15px ${theme.colors.primary}30`,
         };
       case "secondary":
         return {
@@ -67,10 +70,13 @@ export function Button({
 
   const baseClasses = `
     inline-flex items-center justify-center space-x-2 
-    font-medium rounded-lg transition-all duration-200 
+    font-medium rounded-lg transition-all duration-300 
     focus:outline-none focus:ring-2 focus:ring-offset-2
     ${getSizeStyles()}
-    ${disabled || variant === "disabled" ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:opacity-90"}
+    ${disabled || variant === "disabled" 
+      ? "cursor-not-allowed opacity-50" 
+      : "cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg active:scale-95"
+    }
     ${className}
   `;
 
@@ -81,6 +87,7 @@ export function Button({
       className={baseClasses}
       style={{
         ...getVariantStyles(),
+        ...style,
         focusRingColor: theme.colors.ui.focus,
       }}
     >

@@ -44,17 +44,33 @@ export function useTypingEngine() {
     dispatch({ type: "ACTIVATE_POWER_UP", payload: { powerUp } });
   }, [dispatch]);
 
+  // Timer effect with power-up consideration
   useEffect(() => {
     if (state.gameStatus !== "playing") return;
 
     const interval = setInterval(() => {
-      const newRemainingTime = Math.max(0, state.remainingTime - 1);
-      dispatch({ type: "UPDATE_TIME", payload: { remainingTime: newRemainingTime } });
+      const timeFreezed = state.powerUps.timeFreeze > 0;
+      if (!timeFreezed) {
+        const newRemainingTime = Math.max(0, state.remainingTime - 1);
+        dispatch({ type: "UPDATE_TIME", payload: { remainingTime: newRemainingTime } });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [state.gameStatus, state.remainingTime, dispatch]);
+  }, [state.gameStatus, state.remainingTime, state.powerUps.timeFreeze, dispatch]);
 
+  // Power-up countdown effect
+  useEffect(() => {
+    if (state.gameStatus !== "playing") return;
+
+    const interval = setInterval(() => {
+      dispatch({ type: "UPDATE_POWER_UPS" });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [state.gameStatus, dispatch]);
+
+  // Keyboard event handling
   useEffect(() => {
     if (state.gameStatus !== "playing") return;
 
