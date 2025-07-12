@@ -162,19 +162,36 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       // If error immunity is active, treat incorrect characters as correct
       const effectivelyCorrect = isCorrect || hasErrorImmunity;
       
-      // Build the new typed text character by character
-      const newTypedText = state.typedText + character;
-      const newIndex = state.currentIndex + 1;
-      const newErrors = effectivelyCorrect ? state.errors : state.errors + 1;
+      // Build the new typed text - only add the character if it's correct or we have immunity
+      let newTypedText = state.typedText;
+      let newIndex = state.currentIndex;
+      
+      if (effectivelyCorrect) {
+        // Character is correct or we have immunity - add it and advance
+        newTypedText = state.typedText + character;
+        newIndex = state.currentIndex + 1;
+      } else {
+        // Character is incorrect - don't add it, don't advance, just count the error
+        newTypedText = state.typedText;
+        newIndex = state.currentIndex; // Stay at the same position
+      }
+      
+      const newErrors = isCorrect ? state.errors : state.errors + 1;
       const newCombo = effectivelyCorrect ? state.combo + 1 : 0;
       const newMaxCombo = Math.max(state.maxCombo, newCombo);
       const newStreak = effectivelyCorrect ? state.streak + 1 : 0;
       const newMaxStreak = Math.max(state.maxStreak, newStreak);
       
+      // Calculate WPM based on characters typed (including spaces)
       const timeElapsed = (Date.now() - (state.startTime || 0)) / 1000 / 60;
-      const wordsTyped = newTypedText.split(" ").length;
+      const charactersTyped = newTypedText.length;
+      const wordsTyped = charactersTyped / 5; // Standard: 5 characters = 1 word
       const newWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
-      const newAccuracy = newIndex > 0 ? Math.round(((newIndex - newErrors) / newIndex) * 100) : 100;
+      
+      // Calculate accuracy based on total attempts vs correct characters
+      const totalAttempts = state.currentIndex + (effectivelyCorrect ? 1 : 0);
+      const correctCharacters = newTypedText.length;
+      const newAccuracy = totalAttempts > 0 ? Math.round((correctCharacters / totalAttempts) * 100) : 100;
       
       let newScore = state.score;
       if (effectivelyCorrect) {
@@ -220,10 +237,13 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
     case "BACKSPACE": {
       if (state.gameStatus !== "playing" || state.currentIndex === 0) return state;
       
-      const newTypedText = state.typedText.slice(0, -1);
-      const newIndex = state.currentIndex - 1;
+      // Only allow backspace if we've typed something
+      if (state.typedText.length === 0) return state;
       
-      // Recalculate errors based on the new typed text
+      const newTypedText = state.typedText.slice(0, -1);
+      const newIndex = newTypedText.length; // Set index to match typed text length
+      
+      // Recalculate errors based on the new typed text vs expected text
       let newErrors = 0;
       for (let i = 0; i < newTypedText.length; i++) {
         if (newTypedText[i] !== state.currentText[i]) {
@@ -231,11 +251,16 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
         }
       }
       
+      // Recalculate accuracy
+      const totalAttempts = Math.max(state.currentIndex, newTypedText.length);
+      const newAccuracy = totalAttempts > 0 ? Math.round((newTypedText.length / totalAttempts) * 100) : 100;
+      
       return {
         ...state,
         typedText: newTypedText,
         currentIndex: newIndex,
         errors: newErrors,
+        accuracy: newAccuracy,
         combo: Math.max(0, state.combo - 1),
         streak: Math.max(0, state.streak - 1),
       };

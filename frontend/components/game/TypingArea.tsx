@@ -39,10 +39,9 @@ export function TypingArea() {
 
   // Add particle effect when typing
   useEffect(() => {
-    if (state.currentIndex > 0) {
-      const lastTypedChar = state.typedText[state.currentIndex - 1];
-      const expectedChar = state.currentText[state.currentIndex - 1];
-      const isCorrect = lastTypedChar === expectedChar;
+    if (state.currentIndex > 0 || state.typedText.length !== state.currentIndex) {
+      // Check if the last action was correct or incorrect
+      const isCorrect = state.lastCharacterCorrect;
       
       // Add particle
       const newParticle = {
@@ -69,7 +68,7 @@ export function TypingArea() {
         setParticles(prev => prev.filter(p => p.id !== newParticle.id));
       }, 1000);
     }
-  }, [state.currentIndex, state.typedText, state.currentText]);
+  }, [state.lastCharacterCorrect, state.errors]);
 
   const getComboColor = () => {
     if (state.combo >= 50) return theme.colors.accent;
@@ -92,8 +91,8 @@ export function TypingArea() {
           let className = "relative inline-block transition-all duration-150 ";
           let style: React.CSSProperties = {};
           
-          if (index < state.currentIndex) {
-            // Already typed characters
+          if (index < state.typedText.length) {
+            // Already typed characters - compare with what was actually typed
             const typedChar = state.typedText[index];
             if (typedChar === char) {
               className += "text-green-400 bg-green-400/20 ";
@@ -268,7 +267,7 @@ export function TypingArea() {
             className="mt-6 text-sm text-center animate-pulse"
             style={{ color: theme.colors.text.muted }}
           >
-            Click here and start typing...
+            Type the text above. Incorrect characters won't advance the cursor.
           </div>
         )}
       </div>
