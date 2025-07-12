@@ -40,17 +40,16 @@ export function TypingArea() {
         typeCharacter(event.key);
         return;
       }
-      
-      // Allow other keys (arrows, function keys, etc.) to work normally
-      // Don't prevent default for these
     };
 
-    // Add event listener to document to capture all keyboard events
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    // Add event listener to the container element instead of document
+    const container = containerRef.current;
+    if (container && state.gameStatus === "playing") {
+      container.addEventListener("keydown", handleKeyDown);
+      return () => {
+        container.removeEventListener("keydown", handleKeyDown);
+      };
+    }
   }, [state.gameStatus, typeCharacter, handleBackspace]);
 
   // Blinking cursor effect
@@ -75,9 +74,11 @@ export function TypingArea() {
 
   // Add particle effect when typing
   useEffect(() => {
-    if (state.currentIndex > 0 || state.typedText.length !== state.currentIndex) {
+    if (state.currentIndex > 0 && state.typedText.length > 0) {
       // Check if the last action was correct or incorrect
-      const isCorrect = state.lastCharacterCorrect;
+      const lastTypedChar = state.typedText[state.typedText.length - 1];
+      const expectedChar = state.currentText[state.typedText.length - 1];
+      const isCorrect = lastTypedChar === expectedChar;
       
       // Add particle
       const newParticle = {
@@ -104,7 +105,7 @@ export function TypingArea() {
         setParticles(prev => prev.filter(p => p.id !== newParticle.id));
       }, 1000);
     }
-  }, [state.lastCharacterCorrect, state.errors]);
+  }, [state.typedText.length, state.currentText]);
 
   const getComboColor = () => {
     if (state.combo >= 50) return theme.colors.accent;
@@ -154,12 +155,6 @@ export function TypingArea() {
             className += "text-gray-500 ";
             style.color = theme.colors.text.muted;
             style.opacity = 0.7;
-          }
-          
-          // Highlight incorrect characters that were previously typed incorrectly
-          if (state.incorrectChars.has(index) && index >= state.typedText.length) {
-            style.backgroundColor = `${theme.colors.status.incorrect}10`;
-            style.borderBottom = `2px solid ${theme.colors.status.incorrect}`;
           }
           
           return (
@@ -322,7 +317,7 @@ export function TypingArea() {
             className="mt-6 text-sm text-center animate-pulse"
             style={{ color: theme.colors.text.muted }}
           >
-            Type the text above. Incorrect characters won't advance the cursor.
+            Click here and start typing! {state.currentText ? `(${state.currentText.length} characters)` : ''}
           </div>
         )}
       </div>

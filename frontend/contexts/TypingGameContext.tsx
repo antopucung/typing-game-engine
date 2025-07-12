@@ -205,30 +205,18 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const newIncorrectChars = new Set(state.incorrectChars);
       const newCorrectChars = new Set(state.correctChars);
       
+      // Always advance the cursor and add the character to typed text
+      const newTypedText = state.typedText + character;
+      const newIndex = state.currentIndex + 1;
+      
       if (isCorrect) {
         newCorrectChars.add(state.currentIndex);
-        // Remove from incorrect if it was there (user corrected it)
-        newIncorrectChars.delete(state.currentIndex);
       } else {
         newIncorrectChars.add(state.currentIndex);
       }
       
-      // If error immunity is active, treat incorrect characters as correct for progression
+      // If error immunity is active, treat incorrect characters as correct for scoring
       const effectivelyCorrect = isCorrect || hasErrorImmunity;
-      
-      // Build the new typed text - only add the character if it's correct or we have immunity
-      let newTypedText = state.typedText;
-      let newIndex = state.currentIndex;
-      
-      if (effectivelyCorrect) {
-        // Character is correct or we have immunity - add it and advance
-        newTypedText = state.typedText + character;
-        newIndex = state.currentIndex + 1;
-      } else {
-        // Character is incorrect - don't add it, don't advance, just count the error
-        newTypedText = state.typedText;
-        newIndex = state.currentIndex; // Stay at the same position
-      }
       
       const newErrors = isCorrect ? state.errors : state.errors + 1;
       const newCombo = effectivelyCorrect ? state.combo + 1 : 0;
@@ -245,13 +233,12 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       const newRawWpm = timeElapsed > 0 ? Math.round((newTotalKeystrokes / 5) / timeElapsed) : 0;
       
       // Net WPM (corrected for errors)
-      const newNetWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+      const correctCharacters = newCorrectChars.size;
+      const newNetWpm = timeElapsed > 0 ? Math.round((correctCharacters / 5) / timeElapsed) : 0;
       const newWpm = newNetWpm; // Use net WPM as the main WPM metric
       
-      // Calculate accuracy based on correct vs total characters attempted
-      const totalCharactersAttempted = Math.max(newIndex, state.currentIndex + 1);
-      const correctCharacters = newCorrectChars.size;
-      const newAccuracy = totalCharactersAttempted > 0 ? Math.round((correctCharacters / totalCharactersAttempted) * 100) : 100;
+      // Calculate accuracy based on correct vs total characters typed
+      const newAccuracy = newIndex > 0 ? Math.round((newCorrectChars.size / newIndex) * 100) : 100;
       
       let newScore = state.score;
       if (effectivelyCorrect) {
@@ -344,14 +331,11 @@ function typingGameReducer(state: TypingGameState, action: TypingGameAction): Ty
       }
       
       // Recalculate accuracy
-      const totalAttempts = Math.max(newIndex, 1);
-      const correctCharacters = newCorrectChars.size;
-      const newAccuracy = totalAttempts > 0 ? Math.round((correctCharacters / totalAttempts) * 100) : 100;
+      const newAccuracy = newIndex > 0 ? Math.round((newCorrectChars.size / newIndex) * 100) : 100;
       
       // Recalculate WPM
       const timeElapsed = (Date.now() - (state.startTime || 0)) / 1000 / 60;
-      const wordsTyped = newTypedText.length / 5;
-      const newWpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+      const newWpm = timeElapsed > 0 ? Math.round((newCorrectChars.size / 5) / timeElapsed) : 0;
       
       return {
         ...state,
